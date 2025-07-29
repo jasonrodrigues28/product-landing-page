@@ -10,6 +10,7 @@ const routes = [
       { path: 'buyer-dashboard', component: () => import('../pages/BuyerDashboard.vue') },
       { path: 'seller-dashboard', component: () => import('../pages/SellerDashboard.vue') },
       { path: 'admin-dashboard', component: () => import('../pages/AdminDashboard.vue') },
+      { path: '/cart', component: () => import('../pages/CartPage.vue') },
     ],
   },
 ]
