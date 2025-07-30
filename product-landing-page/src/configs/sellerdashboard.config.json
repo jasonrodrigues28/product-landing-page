@@ -1,0 +1,11 @@
+{
+    "buttonTop": 
+    {
+        "text": ["Add New Product", "Delete Product"],
+        "icon": ["add", "delete"]
+    },
+    "heading":
+    {
+        "text": ["Seller Dashboard"]
+    }
+}
