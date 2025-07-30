@@ -1,66 +1,102 @@
 <template>
-    <q-page class="q-pa-md">
-        <q-table 
-         :rows="products"
-         :columns="columns"
-         row-key="id"
-         flat
-         bordered
-         class="product-table">
-        <template v-slot:body-cell-actions="props">
-            <q-td>
-                <q-icon v-if="!deleteMode" name="edit" class="cursor-pointer"
-                @click="editProduct(props.row)"
-                v-show="props.row.hovered"
-                />
-                <q-icon v-else name="delete" class="cursor-pointer text-red"
-                @click="deleteProduct(props.row)"
-                v-show="props.row.hovered"
-                />
-                
-            </q-td>
-        </template>
-        </q-table>
-    </q-page>
+  <q-page class="q-pa-md">
+    <q-table
+      :rows="products"
+      :columns="columns"
+      row-key="id"
+      flat
+      bordered
+      class="product-table"
+    >
+      <template v-slot:body-cell-action="props">
+        <q-td>
+          <q-icon
+            v-if="!deleteMode"
+            :name="icons.edit"
+            class="cursor-pointer"
+            @click="editProduct(props.row)"
+          />
+          <q-icon
+            v-else
+            :name="icons.delete"
+            class="cursor-pointer text-red"
+            @click="deleteProduct(props.row)"
+          />
+        </q-td>
+      </template>
+    </q-table>
+
+    <div v-if="deleteMode" class="table-button row justify-end q-mt-md">
+      <q-btn
+        :color="buttons.save.color"
+        :label="buttons.save.label"
+        @click="save"
+        class="q-mr-sm"
+      />
+      <q-btn
+        :color="buttons.cancel.color"
+        :label="buttons.cancel.label"
+        @click="cancel"
+      />
+    </div>
+  </q-page>
 </template>
+
 <script>
-export default{
-    name: "ProductTable",
-    props:{
-        products: {
-            type: Array,
-            required: true
-        },
-        deleteMode: {
-            type: Boolean,
-            default: false
-        }
+import productTableConfig from '../../configs/producttable.config.json';
+
+export default {
+  name: "ProductTable",
+  props: {
+    products: {
+      type: Array,
+      required: true
     },
-     data() {
+    deleteMode: {
+      type: Boolean,
+      default: false
+    }
+  },
+  data() {
     return {
-      columns: [
-        { name: "id", label: "Product ID", field: "id", align: "left" },
-        { name: "name", label: "Name", field: "name", align: "left" },
-        { name: "description", label: "Description", field: "description", align: "left" },
-        {
-          name: "hasDiscount",
-          label: "Discount?",
-          field: row => (row.hasDiscount ? "Yes" : "No"),
-          align: "center"
-        },
-        { name: "discountPercent", label: "Discount %", field: "discountPercent", align: "center" },
-        { name: "price", label: "Original Price", field: "price", align: "center" },
-        { name: "action", label: "", field: "action", align: "center" }
-      ]
+      columns: productTableConfig.table.columns.map(col => {
+        // Special handling for computed field like "hasDiscount"
+        if (col.name === "hasDiscount") {
+          return {
+            ...col,
+            field: row => (row.hasDiscount ? "Yes" : "No")
+          };
+        }
+        return {
+          ...col,
+          field: col.name
+        };
+      }),
+      buttons: productTableConfig.buttons,
+      icons: productTableConfig.icons
     };
   },
-  methods:{
-    editProduct(){
-        console.log("Edit product clicked");
+  methods: {
+    editProduct(row) {
+      console.log("Edit product clicked:", row);
     },
-    deleteProduct(){
-        console.log("deleteproduct clicked");
+    deleteProduct(row) {
+      console.log("Delete product clicked:", row);
+    },
+    save() {
+      console.log("Save changes");
+      this.$emit('save');
+    },
+    cancel() {
+      console.log("Cancel delete mode");
+      this.$emit('cancel');
     }
   }
-}
+};
 </script>
+
+<style scoped>
+.product-table {
+  margin-bottom: 16px;
+}
+</style>

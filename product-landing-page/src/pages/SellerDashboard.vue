@@ -1,5 +1,8 @@
 <template>
   <q-page class="q-pa-md">
+    
+
+    <div class="text-h6 q-mb-md">{{ config.heading.text[0] }}</div>
     <div class="sd-top-section row justify-end">
       <q-btn
         color="primary"
@@ -15,17 +18,15 @@
         @click="deleteMode = true"
       />
     </div>
-
-    <div class="text-h6 q-mb-md">{{ config.heading.text[0] }}</div>
-
-    <!-- FIX: Changed from config.products to productList -->
-    <ProductTable :products="productList" :deleteMode="deleteMode" />
+    
+    <ProductTable :products="productList" :deleteMode="deleteMode" @save="deleteMode=false" @cancel="deleteMode=false" />
   </q-page>
 </template>
 
 <script>
-import sellerDashboardConfig from "../configs/sellerdashboard.config.json";
 import ProductTable from "../components/SellerDashboard/ProductTable.vue";
+import sellerDashboardConfig from "../configs/sellerdashboard.config.json";
+
 
 export default {
   name: "SellerDashboard",
