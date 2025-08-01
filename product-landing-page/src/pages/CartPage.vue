@@ -13,7 +13,8 @@
                 <q-card-section>
                     <div class="text-h6">{{ item.title }}</div>
                     <div class="text-subtitle2 text-grey">Qty: {{ item.quantity }}</div>
-                    <div class="text-bold">₹ {{ item.price }} x {{ item.quantity }} = ₹ {{ item.price * item.quantity }}
+                    <div class="text-bold">
+                        ₹ {{ item.price }} x {{ item.quantity }} = ₹ {{ item.price * item.quantity }}
                     </div>
                 </q-card-section>
 
@@ -31,27 +32,24 @@
 
 <script>
 import { useCartStore } from '../stores/cart'
+import { mapState, mapActions } from 'pinia'
 
 export default {
     name: 'CartPage',
-    setup() {
-        const cartStore = useCartStore();
 
-        function removeFromCart(id) {
-            cartStore.removeFromCart(id);
-            this.$q.notify({ type: 'info', message: 'Item removed' });
+    computed: {
+        ...mapState(useCartStore, ['items', 'totalPrice']),
+        cart() {
+            return this.items
         }
+    },
 
-        function checkout() {
-            this.$q.notify({ type: 'positive', message: 'Checkout complete (dummy)' });
-            cartStore.clearCart();
-        }
+    methods: {
+        ...mapActions(useCartStore, ['removeFromCart', 'clearCart']),
 
-        return {
-            cart: cartStore.items,
-            totalPrice: cartStore.totalPrice,
-            removeFromCart,
-            checkout
+        checkout() {
+            this.$q.notify({ type: 'positive', message: 'Checkout complete (dummy)' })
+            this.clearCart()
         }
     }
 }

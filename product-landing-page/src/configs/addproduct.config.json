@@ -1,0 +1,17 @@
+{
+  "formHeading": "Add New Product",
+  "fields": {
+    "name": { "label": "Product Name" },
+    "description": { "label": "Product Description" },
+    "category": { "label": "Category" },
+    "colorVariant": { "label": "Color Variants" },
+    "originalPrice": { "label": "Original Price" },
+    "hasDiscount": { "label": "Has Discount?" },
+    "discountPercent": { "label": "Discount Percent (%)" },
+    "finalPrice": { "label": "Final Price" }
+  },
+  "buttons": {
+    "add": "Add Product",
+    "cancel": "Cancel"
+  }
+}

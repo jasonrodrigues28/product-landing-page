@@ -1,102 +1,189 @@
 <template>
-  <q-page class="q-pa-md">
-    <q-table
-      :rows="products"
-      :columns="columns"
-      row-key="id"
-      flat
-      bordered
-      class="product-table"
+  <div>
+    <q-table 
+      :rows="products" 
+      :columns="columns" 
+      row-key="productId"
+      :filter="filter"
+      :row-class="(row) => deleteMode && productsToDelete.has(row.productId) ? 'bg-red-1' : ''"
     >
-      <template v-slot:body-cell-action="props">
-        <q-td>
-          <q-icon
-            v-if="!deleteMode"
-            :name="icons.edit"
-            class="cursor-pointer"
-            @click="editProduct(props.row)"
-          />
-          <q-icon
-            v-else
-            :name="icons.delete"
-            class="cursor-pointer text-red"
-            @click="deleteProduct(props.row)"
-          />
-        </q-td>
+      <template v-slot:top>
+        <div class="row full-width">
+          <div class="col-6">
+            <q-input
+              v-if="!deleteMode"
+              dense
+              debounce="300"
+              v-model="filter"
+              placeholder="Search products"
+            >
+              <template v-slot:append>
+                <q-icon name="search" />
+              </template>
+            </q-input>
+          </div>
+          <div class="col-6 text-right">
+            <q-btn v-if="deleteMode" color="green" :label="config.buttons.save.label" @click="handleDeleteSave" class="q-mr-sm" />
+            <q-btn v-if="deleteMode" color="red" :label="config.buttons.cancel.label" @click="handleDeleteCancel" />
+          </div>
+        </div>
+      </template>
+
+      <template v-slot:body="props">
+        <q-tr :props="props">
+          <q-td key="productId" :props="props">{{ props.row.productId }}</q-td>
+          <q-td key="name" :props="props">{{ props.row.name }}</q-td>
+          <q-td key="description" :props="props">{{ props.row.description }}</q-td>
+          <q-td key="hasDiscount" :props="props">{{ props.row.hasDiscount ? 'Yes' : 'No' }}</q-td>
+          <q-td key="discountPercent" :props="props">{{ props.row.hasDiscount ? props.row.discountPercent + '%' : '-' }}</q-td>
+          <q-td key="originalPrice" :props="props">{{ props.row.originalPrice }}</q-td>
+          <q-td key="finalPrice" :props="props">{{ props.row.hasDiscount ? props.row.finalPrice : props.row.originalPrice }}</q-td>
+          <q-td key="createdAt" :props="props">{{ formatDate(props.row.createdAt) }}</q-td>
+          <q-td key="actions" :props="props">
+            <q-btn 
+              v-if="!deleteMode"
+              flat 
+              round 
+              color="primary" 
+              :icon="config.icons.edit" 
+              @click="editProduct(props.row)" 
+            />
+            <q-btn
+              v-if="deleteMode"
+              flat
+              round
+              color="negative"
+              :icon="config.icons.delete"
+              @click="deleteProduct(props.row)"
+            />
+          </q-td>
+        </q-tr>
       </template>
     </q-table>
 
-    <div v-if="deleteMode" class="table-button row justify-end q-mt-md">
-      <q-btn
-        :color="buttons.save.color"
-        :label="buttons.save.label"
-        @click="save"
-        class="q-mr-sm"
+    <q-dialog v-model="editDialog" persistent>
+      <EditProduct 
+        :product="productToEdit"
+        @close="closeEditDialog"
       />
-      <q-btn
-        :color="buttons.cancel.color"
-        :label="buttons.cancel.label"
-        @click="cancel"
-      />
-    </div>
-  </q-page>
+    </q-dialog>
+  </div>
 </template>
 
 <script>
+import { useProductStore } from '../../stores/productStore';
 import productTableConfig from '../../configs/producttable.config.json';
+import EditProduct from '../EditProduct.vue';
 
 export default {
-  name: "ProductTable",
+  name: 'ProductTable',
+  components: {
+    EditProduct
+  },
   props: {
-    products: {
-      type: Array,
-      required: true
-    },
-    deleteMode: {
-      type: Boolean,
-      default: false
-    }
+    deleteMode: Boolean
   },
   data() {
     return {
-      columns: productTableConfig.table.columns.map(col => {
-        // Special handling for computed field like "hasDiscount"
-        if (col.name === "hasDiscount") {
-          return {
-            ...col,
-            field: row => (row.hasDiscount ? "Yes" : "No")
-          };
-        }
-        return {
-          ...col,
-          field: col.name
-        };
-      }),
-      buttons: productTableConfig.buttons,
-      icons: productTableConfig.icons
+      config: productTableConfig,
+      filter: '',
+      productsToDelete: new Set(),
+      editDialog: false,
+      productToEdit: null,
+      columns: [
+        { name: 'productId', label: 'Product ID', field: 'productId', align: 'left' },
+        { name: 'name', label: 'Name', field: 'name', align: 'left', sortable: true },
+        { name: 'description', label: 'Description', field: 'description', align: 'left' },
+        { name: 'hasDiscount', label: 'Discount?', field: row => row.hasDiscount ? 'Yes' : 'No', align: 'center' },
+        { name: 'discountPercent', label: 'Discount %', field: 'discountPercent', align: 'center' },
+        { name: 'originalPrice', label: 'Original Price', field: 'originalPrice', align: 'right', sortable: true },
+        { name: 'finalPrice', label: 'Final Price', field: 'finalPrice', align: 'right', sortable: true },
+        { 
+          name: 'createdAt', 
+          label: 'Created', 
+          field: 'createdAt',
+          align: 'center',
+          sortable: true,
+          format: (val) => new Date(val).toLocaleString()
+        },
+        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
+      ]
     };
   },
+  computed: {
+    products() {
+      return useProductStore().productList;
+    }
+  },
   methods: {
-    editProduct(row) {
-      console.log("Edit product clicked:", row);
+    formatDate(dateString) {
+      if (!dateString) return '';
+      return new Date(dateString).toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     },
-    deleteProduct(row) {
-      console.log("Delete product clicked:", row);
+    editProduct(product) {
+      if (!this.deleteMode) {
+        this.productToEdit = { ...product };
+        this.editDialog = true;
+      }
     },
-    save() {
-      console.log("Save changes");
+    closeEditDialog() {
+      this.editDialog = false;
+      this.productToEdit = null;
+    },
+    handleEditSave(updatedProduct) {
+      const store = useProductStore();
+      store.updateProduct(updatedProduct.productId, updatedProduct);
+      this.closeEditDialog();
+    },
+    deleteProduct(product) {
+      if (this.deleteMode) {
+        if (this.productsToDelete.has(product.productId)) {
+          this.productsToDelete.delete(product.productId);
+          this.$q.notify({
+            type: 'info',
+            message: `Removed ${product.name} from deletion list`,
+            timeout: 1000
+          });
+        } else {
+          this.productsToDelete.add(product.productId);
+          this.$q.notify({
+            type: 'warning',
+            message: `Added ${product.name} to deletion list`,
+            timeout: 1000
+          });
+        }
+      }
+    },
+    handleDeleteSave() {
+      if (this.productsToDelete.size > 0) {
+        const store = useProductStore();
+        const productsCount = this.productsToDelete.size;
+        store.deleteMultipleProducts(Array.from(this.productsToDelete));
+        this.productsToDelete.clear();
+        this.$q.notify({
+          type: 'positive',
+          message: `Successfully deleted ${productsCount} product${productsCount > 1 ? 's' : ''}`
+        });
+      }
       this.$emit('save');
     },
-    cancel() {
-      console.log("Cancel delete mode");
+    handleDeleteCancel() {
+      this.productsToDelete.clear();
       this.$emit('cancel');
+    }
+  },
+  watch: {
+    deleteMode(newVal) {
+      if (!newVal) {
+        this.productsToDelete.clear();
+      }
     }
   }
 };
 </script>
-
-<style scoped>
-.product-table {
-  margin-bottom: 16px;
-}
-</style>

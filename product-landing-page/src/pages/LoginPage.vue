@@ -2,69 +2,123 @@
     <q-page class="q-pa-md flex flex-center">
         <q-card class="q-pa-lg" style="width: 100%; max-width: 400px;">
             <q-card-section>
-                <div class="text-h6">Login</div>
+                <div class="text-h6">Seller Login</div>
+                <div class="text-subtitle2 text-grey">Login to manage your products</div>
             </q-card-section>
 
             <q-card-section>
-                <q-form @submit.prevent="handleLogin">
-                    <q-input v-model="username" :placeholder="config.username.placeholder"
-                        :maxlength="config.username.maxLength" label="Username" filled class="q-mb-md" />
-                    <q-input v-model="password" :placeholder="config.password.placeholder"
-                        :maxlength="config.password.maxLength" label="Password" type="password" filled
-                        class="q-mb-md" />
+                <q-form @submit.prevent="handleLogin" class="q-gutter-md">
+                    <q-input
+                        v-model="email"
+                        label="Email"
+                        type="email"
+                        outlined
+                        :rules="[
+                            val => !!val || 'Email is required',
+                            val => validateEmail(val) || 'Please enter a valid email'
+                        ]"
+                    />
+                    
+                    <q-input
+                        v-model="password"
+                        label="Password"
+                        :type="showPassword ? 'text' : 'password'"
+                        outlined
+                        :rules="[val => !!val || 'Password is required']"
+                    >
+                        <template v-slot:append>
+                            <q-icon
+                                :name="showPassword ? 'visibility_off' : 'visibility'"
+                                class="cursor-pointer"
+                                @click="showPassword = !showPassword"
+                            />
+                        </template>
+                    </q-input>
 
-                    <q-btn type="submit" color="primary" :label="config.button.text" class="full-width" />
+                    <div>
+                        <q-btn
+                            type="submit"
+                            color="primary"
+                            label="Login"
+                            class="full-width"
+                            :loading="loading"
+                        />
+                    </div>
                 </q-form>
+            </q-card-section>
+
+            <q-card-section class="text-center text-grey">
+                Demo credentials:<br>
+                Email: seller@example.com<br>
+                Password: seller123
             </q-card-section>
         </q-card>
     </q-page>
 </template>
 
 <script>
-import loginConfig from "../configs/login.config.json";
 import { useUserStore } from "../stores/user";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 
 export default {
     name: "LoginPage",
     data() {
         return {
-            username: "",
+            email: "",
             password: "",
-            config: loginConfig
+            showPassword: false,
+            loading: false
         };
     },
     setup() {
         const router = useRouter();
+        const route = useRoute();
         const userStore = useUserStore();
-        return { router, userStore };
+        return { router, route, userStore };
     },
     methods: {
+        validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        },
         handleLogin() {
-            // 👇 Temporary fake login logic
-            const role = this.username.toLowerCase(); // e.g., "buyer", "seller", "admin"
-
-            if (!this.config.roles.includes(role)) {
+            this.loading = true;
+            
+            // Simple validation
+            if (!this.email || !this.password) {
                 this.$q.notify({
                     type: "negative",
-                    message: "Invalid role/user"
+                    message: "Please fill in all fields",
+                    position: 'top'
                 });
+                this.loading = false;
                 return;
             }
 
-            this.userStore.login({
-                username: this.username,
-                role: role
+            const success = this.userStore.login({
+                username: this.email,
+                password: this.password,
+                role: 'seller'
             });
 
-            // 🔀 Redirect to correct dashboard
-            if (role === "buyer") {
-                this.router.push("/buyer-dashboard");
-            } else if (role === "seller") {
-                this.router.push("/seller-dashboard");
-            } else if (role === "admin") {
-                this.router.push("/admin-dashboard");
+            if (success) {
+                this.$q.notify({
+                    type: "positive",
+                    message: "Login successful!",
+                    position: 'top'
+                });
+                
+                // Redirect to the original destination or seller dashboard
+                const redirectPath = this.route.query.redirect || '/seller';
+                this.router.push(redirectPath);
+            } else {
+                this.$q.notify({
+                    type: "negative",
+                    message: "Invalid credentials",
+                    position: 'top'
+                });
             }
+            
+            this.loading = false;
         }
     }
 };
