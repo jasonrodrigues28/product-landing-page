@@ -1,76 +1,88 @@
 import { defineStore } from 'pinia'
+import usersData from '../configs/users.json'
 
 export const useUserStore = defineStore('user', {
   state: () => {
-    const savedState = localStorage.getItem('userStore');
+    const savedState = localStorage.getItem('userStore')
     const defaultState = {
       isAuthenticated: false,
       username: '',
       role: '',
-      email: ''
-    };
-
-    if (savedState) {
-      return JSON.parse(savedState);
+      email: '',
+      users: [],
     }
 
-    return defaultState;
+    if (savedState) {
+      return JSON.parse(savedState)
+    }
+
+    // If no store saved, load default users from JSON
+    defaultState.users = usersData
+    return defaultState
   },
 
   actions: {
     saveToLocalStorage() {
-      localStorage.setItem('userStore', JSON.stringify(this.$state));
+      localStorage.setItem('userStore', JSON.stringify(this.$state))
+    },
+
+    loadUsers() {
+      const storedUsers = localStorage.getItem('users')
+      if (storedUsers) {
+        this.users = JSON.parse(storedUsers)
+      } else {
+        this.users = usersData
+      }
     },
 
     login(credentials) {
-      // Demo credentials
-      const users = {
-        seller: {
-          email: 'seller@example.com',
-          password: 'seller123',
-          username: 'Seller',
-          role: 'seller'
-        },
-        buyer: {
-          email: 'buyer@example.com',
-          password: 'buyer123',
-          username: 'Buyer',
-          role: 'buyer'
-        }
-      };
+      // Make sure we have the latest user list
+      this.loadUsers()
 
-      // Check credentials
-      const user = Object.values(users).find(u => 
-        u.email === credentials.email && 
-        u.password === credentials.password
-      );
+      const user = this.users.find(
+        (u) => u.email === credentials.email && u.password === credentials.password,
+      )
 
       if (user) {
-        this.isAuthenticated = true;
-        this.username = user.username;
-        this.role = user.role;
-        this.email = user.email;
-        this.saveToLocalStorage();
-        return true;
+        this.isAuthenticated = true
+        this.username = user.name
+        this.role = user.role
+        this.email = user.email
+        this.saveToLocalStorage()
+        return true
       }
 
-      return false;
+      return false
+    },
+
+    registerUser(newUser) {
+      this.loadUsers()
+
+      if (this.users.find((u) => u.email === newUser.email)) {
+        return { success: false, message: 'User already exists' }
+      }
+
+      const userToAdd = { id: Date.now(), ...newUser }
+      this.users.push(userToAdd)
+
+      localStorage.setItem('users', JSON.stringify(this.users))
+      return { success: true, message: 'Registration successful!' }
     },
 
     logout() {
-      this.isAuthenticated = false;
-      this.username = '';
-      this.role = '';
-      this.email = '';
-      this.saveToLocalStorage();
+      this.isAuthenticated = false
+      this.username = ''
+      this.role = ''
+      this.email = ''
+      this.saveToLocalStorage()
     },
 
     checkIsSeller() {
-      return this.isAuthenticated && this.role === 'seller';
+      return this.isAuthenticated && this.role === 'seller'
     },
 
     checkIsBuyer() {
-      return this.isAuthenticated && this.role === 'buyer';
-    }
-  }
+      return this.isAuthenticated && this.role === 'buyer'
+    },
+  },
 })
