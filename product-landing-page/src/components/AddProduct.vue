@@ -89,6 +89,42 @@
             Selected: {{ product.images[color].name }}
           </div>
         </div>
+
+        <!-- Stock Input -->
+        <div v-if="product.colorVariants?.length > 0">
+          <div v-for="color in product.colorVariants" :key="color" class="q-mb-md">
+            <q-input
+              v-model.number="stockByColor[color]"
+              type="number"
+              :label="`Initial Stock for ${color}`"
+              class="q-mb-sm"
+              :rules="[
+                val => val >= 0 || 'Stock cannot be negative',
+                val => val > 0 || 'Stock must be greater than 0'
+              ]"
+            >
+              <template v-slot:append>
+                <q-icon name="inventory_2" />
+              </template>
+            </q-input>
+          </div>
+        </div>
+        <q-input
+          v-else
+          v-model.number="product.stock"
+          type="number"
+          label="Initial Stock"
+          class="q-mb-md"
+          :rules="[
+            val => val >= 0 || 'Stock cannot be negative',
+            val => val > 0 || 'Stock must be greater than 0'
+          ]"
+        >
+          <template v-slot:append>
+            <q-icon name="inventory_2" />
+          </template>
+        </q-input>
+
         <q-card-actions align="right">
           <q-btn :label="isEdit ? 'Save Changes' : 'Add Product'" color="primary" type="submit" />
           <q-btn label="Cancel" color="negative" flat @click="$emit('close')" />
@@ -125,8 +161,11 @@ export default {
         originalPrice: 0,
         finalPrice: 0,
         colorVariants: [],
-        images: {}
+        images: {},
+        stock: 50, // Default stock for non-color variants
+        unitsSold: 0
       },
+      stockByColor: {}, // Track stock for each color
       categories: ['Shirt', 'Tshirt', 'Pants'],
       colors: ['Red', 'Green', 'Blue']
     };
@@ -142,12 +181,34 @@ export default {
       if (this.editProduct.imagePaths) {
         this.existingImages = { ...this.editProduct.imagePaths };
       }
+      
+      // Initialize stockByColor from editProduct
+      if (this.editProduct.stockByColor) {
+        this.stockByColor = { ...this.editProduct.stockByColor };
+      } else if (this.editProduct.stock && this.editProduct.colorVariants?.length > 0) {
+        // Distribute stock evenly among colors if we have old format data
+        const stockPerColor = Math.floor(this.editProduct.stock / this.editProduct.colorVariants.length);
+        this.editProduct.colorVariants.forEach(color => {
+          this.stockByColor[color] = stockPerColor;
+        });
+      }
     }
   },
   watch: {
     'product.originalPrice': 'calculateFinalPrice',
     'product.discountPercent': 'calculateFinalPrice',
-    'product.hasDiscount': 'calculateFinalPrice'
+    'product.hasDiscount': 'calculateFinalPrice',
+    'product.colorVariants': {
+      handler(newColors) {
+        // When color variants change, initialize their stock values
+        const newStockByColor = {};
+        newColors.forEach(color => {
+          // Preserve existing stock values or use default
+          newStockByColor[color] = this.stockByColor[color] || 50;
+        });
+        this.stockByColor = newStockByColor;
+      }
+    }
   },
   methods: {
     calculateFinalPrice() {
@@ -347,7 +408,10 @@ export default {
           originalPrice: this.product.originalPrice,
           finalPrice: this.product.finalPrice,
           colorVariants: [...this.product.colorVariants],
-          imagePaths: {}
+          imagePaths: {},
+          // Add stock data
+          stock: this.product.colorVariants.length === 0 ? this.product.stock : undefined,
+          stockByColor: this.product.colorVariants.length > 0 ? {...this.stockByColor} : undefined
         };
 
         // Convert any new image uploads to base64 and store them

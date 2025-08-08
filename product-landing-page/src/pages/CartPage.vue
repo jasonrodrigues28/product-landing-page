@@ -32,6 +32,7 @@
 
 <script>
 import { useCartStore } from '../stores/cart'
+import { useProductStore } from '../stores/productStore'
 import { mapState, mapActions } from 'pinia'
 
 export default {
@@ -47,9 +48,42 @@ export default {
     methods: {
         ...mapActions(useCartStore, ['removeFromCart', 'clearCart']),
 
-        checkout() {
-            this.$q.notify({ type: 'positive', message: 'Checkout complete (dummy)' })
-            this.clearCart()
+        async checkout() {
+            try {
+                const productStore = useProductStore();
+                
+                // First check if all items have sufficient stock
+                const insufficientStock = this.items.find(item => {
+                    const product = productStore.productList.find(p => p.productId === item.id);
+                    if (!product) return true;
+                    const currentStock = item.selectedColor ? 
+                        (product.stockByColor?.[item.selectedColor] || 0) : 
+                        (product.stock || 0);
+                    return currentStock < item.quantity;
+                });
+
+                if (insufficientStock) {
+                    throw new Error('Some items are out of stock');
+                }
+
+                // Update stock in product store
+                productStore.checkout(this.items);
+                
+                // Clear the cart
+                this.clearCart();
+                
+                this.$q.notify({ 
+                    type: 'positive', 
+                    message: 'Checkout complete! Thank you for your purchase.',
+                    position: 'top'
+                });
+            } catch (error) {
+                this.$q.notify({ 
+                    type: 'negative', 
+                    message: error.message || 'Failed to complete checkout',
+                    position: 'top'
+                });
+            }
         }
     }
 }

@@ -69,6 +69,7 @@
                                 spread
                                 no-caps
                                 class="full-width"
+                                @update:model-value="updateProductColor(product.productId)"
                             />
                         </div>
                     </q-card-section>                    <q-card-section>
@@ -96,6 +97,17 @@
                                 SALE
                             </q-chip>
                         </div>
+
+                        <div class="q-mt-md">
+                            <ProductQuantity
+                                :key="`${product.productId}-${selectedColors[product.productId] || product.colorVariants[0]}`"
+                                :product-id="product.productId"
+                                :initial-stock="product.stockByColor ? product.stockByColor[selectedColors[product.productId] || product.colorVariants[0]] : product.stock"
+                                :is-seller="false"
+                                :selected-color="selectedColors[product.productId] || product.colorVariants[0]"
+                                @added-to-cart="handleAddToCart($event, product)"
+                            />
+                        </div>
                     </q-card-section>
 
                     <q-card-section v-if="product.colorVariants && product.colorVariants.length">
@@ -112,7 +124,8 @@
                         </div>
                     </q-card-section>
 
-                    <q-card-actions align="right">
+                    <q-card-actions align="right" v-if="false">
+                        <!-- Hidden since we're using ProductQuantity component -->
                         <q-btn 
                             label="Add to Cart" 
                             color="primary" 
@@ -136,9 +149,13 @@
 <script>
 import { useCartStore } from "../stores/cart";
 import { useProductStore } from "../stores/productStore";
+import ProductQuantity from "../components/common/ProductQuantity.vue";
 
 export default {
     name: "BuyerDashboard",
+    components: {
+        ProductQuantity
+    },
 
     data() {
         return {
@@ -187,11 +204,18 @@ export default {
             const firstColor = Object.keys(product.imagePaths)[0];
             return product.imagePaths[firstColor];
         },
-    async addToCart(product) {
+    async handleAddToCart(quantity, product) {
       this.addingToCart = product.productId;
       try {
         const selectedColor = this.selectedColors[product.productId] || product.colorVariants[0];
-        await this.cartStore.addToCart({
+        const currentStock = product.stockByColor?.[selectedColor] || product.stock;
+        
+        // Check if enough stock is available
+        if (currentStock < quantity) {
+          throw new Error('Not enough stock available');
+        }
+        
+        const cartItem = {
           id: product.productId,
           title: product.name,
           price: product.hasDiscount ? product.finalPrice : product.originalPrice,
@@ -199,23 +223,43 @@ export default {
           description: product.description,
           selectedColor: selectedColor,
           image: product.imagePaths[selectedColor],
-          quantity: 1
-        });                this.$q.notify({
-                    type: "positive",
-                    message: `${product.name} (${selectedColor}) added to cart!`,
-                    position: 'top'
-                });
-            } catch (err) {
-                console.error('Failed to add to cart:', err);
-                this.$q.notify({
-                    type: "negative",
-                    message: `Failed to add product to cart: ${err.message}`,
-                    position: 'top'
-                });
-            } finally {
-                this.addingToCart = null;
-            }
-        }
+          quantity: quantity,
+          stockByColor: product.stockByColor // Include stock information
+        };
+        
+        // Add to cart without updating stock
+        await this.cartStore.addToCart(cartItem);
+        
+        this.$q.notify({
+          type: 'positive',
+          message: `Added ${quantity} ${product.name} to cart`,
+          position: 'top'
+        });
+      } catch (err) {
+        console.error('Failed to add to cart:', err);
+        this.$q.notify({
+          type: "negative",
+          message: `Failed to add product to cart: ${err.message}`,
+          position: 'top'
+        });
+      } finally {
+        this.addingToCart = null;
+      }
+    },
+        
+    // Legacy method kept for reference
+    async addToCart(product) {
+      await this.handleAddToCart(1, product);
+    },
+    
+    // Update ProductQuantity when color changes
+    updateProductColor() {
+      // Force ProductQuantity component to re-render by creating a key
+      this.$nextTick(() => {
+        // This will trigger reactivity
+        this.$forceUpdate();
+      });
+    }
     }
 };
 </script>
