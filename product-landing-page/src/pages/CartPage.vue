@@ -5,7 +5,7 @@
         <!-- Empty Cart Message -->
         <q-card v-if="cart.length === 0" class="q-pa-md text-center empty-cart">
             <q-icon name="shopping_cart" size="64px" color="grey-5" />
-            <div class="text-subtitle1 q-mt-sm text-grey-7">Your cart is empty</div>
+            <div class="text-subtitle1 q-mt-sm text-grey-5">Your cart is empty</div>
         </q-card>
 
         <!-- Cart Items -->
@@ -14,8 +14,8 @@
                 <q-img :src="item.image" :ratio="16 / 9" class="cart-img" />
 
                 <q-card-section>
-                    <div class="text-h6">{{ item.title }}</div>
-                    <div class="text-subtitle2 text-grey">Qty: {{ item.quantity }}</div>
+                    <div class="text-h6 text-white">{{ item.title }}</div>
+                    <div class="text-subtitle2 text-grey-4">Qty: {{ item.quantity }}</div>
                     <div class="text-bold text-primary">
                         ₹ {{ item.price }} x {{ item.quantity }} = ₹ {{ item.price * item.quantity }}
                     </div>
@@ -27,12 +27,12 @@
             </q-card>
 
             <!-- Total -->
-            <div class="text-h6 text-right q-mt-lg">
+            <div class="text-h6 text-right q-mt-lg text-white">
                 Total: <span class="text-primary">₹ {{ totalPrice }}</span>
             </div>
 
             <!-- Checkout -->
-            <q-btn label="Proceed to Checkout" color="primary" class="q-mt-md full-width" @click="checkout"
+            <q-btn label="Proceed to Checkout" color="primary" class="q-mt-md full-width rounded-btn" @click="checkout"
                 icon="payment" />
         </div>
     </q-page>
@@ -65,20 +65,25 @@ export default {
 
 <style scoped>
 .cart-page {
-    background: linear-gradient(135deg, #f0f4ff, #e0e7ff);
     min-height: 100vh;
+    background: radial-gradient(circle at top, rgba(40, 44, 52, 1), rgba(15, 17, 20, 1));
+    color: white;
 }
 
 .empty-cart {
-    background: white;
+    background: rgba(30, 32, 38, 0.9);
     border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    color: white;
 }
 
 .cart-item-card {
+    background: rgba(30, 32, 38, 0.9);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    color: white;
+    max-width: 500px;
 }
 
 .cart-img {
@@ -87,5 +92,9 @@ export default {
 
 .full-width {
     width: 100%;
+}
+
+.rounded-btn {
+    border-radius: 12px;
 }
 </style>
