@@ -99,12 +99,18 @@ export const useProductStore = defineStore('product', {
           });
         }
 
+        const unitsSoldByColor = product.colorVariants?.length
+          ? Object.fromEntries(product.colorVariants.map(c => [c, 0]))
+          : {}; // empty when no variants
+
         const newProduct = {
           ...product,
           productId: `${this.sellerInitials}-${nextId}`,
           createdAt: timestamp,
           updatedAt: timestamp,
-          stockByColor
+          stockByColor,
+          unitsSold: 0, // aggregate (backwards compatibility)
+          unitsSoldByColor
         };
         
         // Update the highest used ID if necessary
@@ -131,10 +137,26 @@ export const useProductStore = defineStore('product', {
           this.currentProductId = this.highestUsedId + 1;
         }
         
+        const existing = this.productList[index];
+        // Preserve / merge unitsSoldByColor; if variants changed, initialize new colors
+        let unitsSoldByColor = existing.unitsSoldByColor || {};
+        if (updatedProduct.colorVariants?.length) {
+          const nextMap = {};
+            updatedProduct.colorVariants.forEach(c => {
+              nextMap[c] = unitsSoldByColor[c] || 0;
+            });
+          unitsSoldByColor = nextMap;
+        } else if (!updatedProduct.colorVariants?.length) {
+          unitsSoldByColor = {}; // no variants anymore
+        }
+        // Recompute aggregate
+        const aggregateUnitsSold = Object.values(unitsSoldByColor).reduce((a,b)=>a+b, existing.unitsSold || 0);
         this.productList[index] = {
           ...updatedProduct,
-          createdAt: this.productList[index].createdAt, // Preserve original creation date
-          updatedAt: new Date().toISOString() // Update the modification date
+          unitsSoldByColor,
+          unitsSold: aggregateUnitsSold,
+          createdAt: existing.createdAt,
+          updatedAt: new Date().toISOString()
         };
         this.saveToLocalStorage();
       }
@@ -236,17 +258,21 @@ export const useProductStore = defineStore('product', {
       }
     },
 
-    incrementUnitsSold(productId, quantity = 1) {
+    incrementUnitsSold(productId, quantity = 1, color = null) {
       const index = this.productList.findIndex(p => p.productId === productId);
-      if (index !== -1) {
-        const currentUnitsSold = this.productList[index].unitsSold || 0;
-        this.productList[index] = {
-          ...this.productList[index],
-          unitsSold: currentUnitsSold + quantity,
-          updatedAt: new Date().toISOString()
-        };
-        this.saveToLocalStorage();
+      if (index === -1) return;
+      const product = this.productList[index];
+      // Color-specific path
+      if (color && product.colorVariants?.includes(color)) {
+        if (!product.unitsSoldByColor) product.unitsSoldByColor = {};
+        product.unitsSoldByColor[color] = (product.unitsSoldByColor[color] || 0) + quantity;
+        product.unitsSold = Object.values(product.unitsSoldByColor).reduce((a,b)=>a+b,0);
+      } else {
+        // Legacy / no-color path
+        product.unitsSold = (product.unitsSold || 0) + quantity;
       }
+      product.updatedAt = new Date().toISOString();
+      this.saveToLocalStorage();
     },
 
     addToCart(productId, quantity) {
@@ -280,7 +306,7 @@ export const useProductStore = defineStore('product', {
       }
     },
 
-    checkout(cartItems) {
+  checkout(cartItems) {
       // Process each item in the cart
       cartItems.forEach(item => {
         const product = this.productList.find(p => p.productId === item.id);
@@ -290,7 +316,10 @@ export const useProductStore = defineStore('product', {
           // Handle color-specific stock
           if (product.stockByColor?.[item.selectedColor] >= item.quantity) {
             product.stockByColor[item.selectedColor] -= item.quantity;
-            product.unitsSold = (product.unitsSold || 0) + item.quantity;
+      // Increment color-specific units sold
+      if (!product.unitsSoldByColor) product.unitsSoldByColor = {};
+      product.unitsSoldByColor[item.selectedColor] = (product.unitsSoldByColor[item.selectedColor] || 0) + item.quantity;
+      product.unitsSold = Object.values(product.unitsSoldByColor).reduce((a,b)=>a+b,0);
           }
         } else {
           // Handle regular stock

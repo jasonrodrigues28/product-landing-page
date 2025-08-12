@@ -132,13 +132,19 @@ export default {
       const store = useProductStore();
       const product = store.productList.find(p => p.productId === this.productId);
       if (product) {
-        this.unitsSold = product.unitsSold || 0;
-        
-        // Get color-specific stock
+        // Color-specific units sold logic
+        if (this.selectedColor && product.unitsSoldByColor) {
+          this.unitsSold = product.unitsSoldByColor[this.selectedColor] || 0;
+        } else if (product.unitsSoldByColor && !this.selectedColor && product.colorVariants?.length === 1) {
+          const onlyColor = product.colorVariants[0];
+            this.unitsSold = product.unitsSoldByColor[onlyColor] || 0;
+        } else {
+          this.unitsSold = product.unitsSold || 0;
+        }
+        // Existing stock logic retained
         if (product.stockByColor && this.selectedColor) {
           this.stock = product.stockByColor[this.selectedColor] ?? this.initialStock;
         } else if (product.stockByColor && product.colorVariants?.length === 1) {
-          // If there's only one color variant
           this.stock = product.stockByColor[product.colorVariants[0]] ?? this.initialStock;
         } else {
           this.stock = product.stock ?? this.initialStock;
@@ -193,4 +199,4 @@ export default {
 .product-quantity {
   min-width: 200px;
 }
-</style> 
+</style>
