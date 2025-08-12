@@ -56,7 +56,7 @@ export default {
         ...mapActions(useCartStore, ['removeFromCart', 'clearCart']),
 
         checkout() {
-            this.$q.notify({ type: 'positive', message: 'Checkout complete (dummy)' })
+            this.$q.notify({ type: 'positive', message: 'Checkout complete!' })
             this.clearCart()
         }
     }
