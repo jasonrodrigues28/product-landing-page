@@ -1,90 +1,46 @@
 <template>
-    <q-page class="q-pa-md page-gradient">
+    <q-page class="buyer-dashboard-page q-pa-md">
         <div class="text-h5 q-mb-md text-primary">Available Products</div>
 
         <!-- Search and Filter Section -->
         <div class="row q-mb-md search-filter">
             <div class="col-12 col-md-4">
-                <q-input v-model="searchText" label="Search products" dense outlined clearable>
+                <q-input v-model="searchText" label="Search products" dense outlined clearable label-color="white"
+                    color="white" class="white-input">
                     <template v-slot:append>
-                        <q-icon name="search" />
+                        <q-icon name="search" color="white" />
                     </template>
                 </q-input>
             </div>
             <div class="col-12 col-md-4 q-pl-md">
                 <q-select v-model="selectedCategory" :options="categories" label="Filter by category" dense outlined
-                    clearable options-dense />
+                    clearable options-dense label-color="white" color="white" class="white-input" />
             </div>
         </div>
 
         <!-- Products Grid -->
         <div class="row q-col-gutter-md">
             <div v-for="product in filteredProducts" :key="product.productId" class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <q-card class="product-card">
-                    <div class="product-image">
-                        <template v-if="product.imagePaths && Object.keys(product.imagePaths).length > 0">
-                            <img :src="product.imagePaths[selectedColors[product.productId] || product.colorVariants[0]]"
-                                :alt="product.name" />
+                <q-card class="product-card-dark q-mb-md" @click="openProductDetails(product)">
+                    <q-img
+                        :src="product.imagePaths && Object.keys(product.imagePaths).length > 0 ? product.imagePaths[selectedColors[product.productId] || product.colorVariants[0]] : product.image || ''"
+                        :ratio="16 / 9" class="product-img-dark">
+                        <template v-slot:error>
+                            <div class="no-image flex flex-center column text-grey-5">
+                                <q-icon name="image" size="64px" />
+                                <div>No Image</div>
+                            </div>
                         </template>
-                        <div v-else class="no-image">
-                            <q-icon name="image" size="50px" color="grey-5" />
-                        </div>
-                    </div>
-
+                    </q-img>
                     <q-card-section>
-                        <div class="row items-center q-mt-sm">
-                            <div class="col">
-                                <div class="text-h6">{{ product.name }}</div>
-                                <div class="text-subtitle2">{{ product.category }}</div>
-                            </div>
-                        </div>
-
-                        <!-- Color variants -->
-                        <div v-if="product.colorVariants && product.colorVariants.length > 0"
-                            class="row items-center q-mt-sm">
-                            <q-btn-toggle v-model="selectedColors[product.productId]" :options="product.colorVariants.map(color => ({
-                                label: color,
-                                value: color,
-                                disable: !product.imagePaths[color]
-                            }))" flat dense spread no-caps class="full-width" />
+                        <div class="text-h6 text-white">{{ product.name }}</div>
+                        <div class="text-subtitle2 text-grey-4">{{ product.category }}</div>
+                        <div class="text-grey-5 q-mt-sm">{{ product.description }}</div>
+                        <div class="text-h6 text-primary q-mt-md">
+                            ₹ {{ product.finalPrice ?? product.originalPrice ?? product.price ?? 0 }}
+                            <span v-if="product.hasDiscount" class="text-negative text-caption q-ml-sm">SALE</span>
                         </div>
                     </q-card-section>
-
-                    <q-card-section>
-                        <div class="text-grey-8">{{ product.description }}</div>
-
-                        <div class="row justify-between items-center q-mt-md">
-                            <div>
-                                <div class="text-subtitle1" :class="{ 'text-strike': product.hasDiscount }">
-                                    ₹{{ product.originalPrice }}
-                                </div>
-                                <div v-if="product.hasDiscount" class="text-positive text-weight-bold">
-                                    ₹{{ product.finalPrice }}
-                                    <span class="text-grey text-caption q-ml-sm">
-                                        (-{{ product.discountPercent }}%)
-                                    </span>
-                                </div>
-                            </div>
-
-                            <q-chip v-if="product.hasDiscount" color="negative" text-color="white" size="sm">
-                                SALE
-                            </q-chip>
-                        </div>
-                    </q-card-section>
-
-                    <q-card-section v-if="product.colorVariants && product.colorVariants.length">
-                        <div class="text-caption q-mb-xs">Available Colors:</div>
-                        <div class="row items-center">
-                            <q-chip v-for="color in product.colorVariants" :key="color" size="sm" dense>
-                                {{ color }}
-                            </q-chip>
-                        </div>
-                    </q-card-section>
-
-                    <q-card-actions align="right">
-                        <q-btn label="Add to Cart" color="primary" @click="addToCart(product)"
-                            :loading="addingToCart === product.productId" class="q-mt-sm" />
-                    </q-card-actions>
                 </q-card>
             </div>
 
@@ -99,166 +55,98 @@
 </template>
 
 <script>
-import { useCartStore } from "../stores/cart";
 import { useProductStore } from "../stores/productStore";
 
 export default {
     name: "BuyerDashboard",
     data() {
         return {
-            cartStore: useCartStore(),
             productStore: useProductStore(),
             searchText: "",
             selectedCategory: null,
-            addingToCart: null,
             selectedColors: {}
         };
     },
     computed: {
         categories() {
-            const categoriesSet = new Set(
-                this.productStore.productList.map(p => p.category)
-            );
+            const categoriesSet = new Set(this.productStore.productList.map(p => p.category));
             return Array.from(categoriesSet);
         },
         filteredProducts() {
             let products = this.productStore.productList;
-
             if (this.searchText) {
                 const searchLower = this.searchText.toLowerCase();
-                products = products.filter(
-                    p =>
-                        p.name.toLowerCase().includes(searchLower) ||
-                        p.description.toLowerCase().includes(searchLower)
-                );
+                products = products.filter(p => p.name.toLowerCase().includes(searchLower) || p.description.toLowerCase().includes(searchLower));
             }
             if (this.selectedCategory) {
-                products = products.filter(
-                    p => p.category === this.selectedCategory
-                );
+                products = products.filter(p => p.category === this.selectedCategory);
             }
             return products;
         }
     },
     methods: {
-        async addToCart(product) {
-            this.addingToCart = product.productId;
-            try {
-                const selectedColor =
-                    this.selectedColors[product.productId] ||
-                    product.colorVariants[0];
-                await this.cartStore.addToCart({
-                    id: product.productId,
-                    title: product.name,
-                    price: product.hasDiscount
-                        ? product.finalPrice
-                        : product.originalPrice,
-                    originalPrice: product.originalPrice,
-                    description: product.description,
-                    selectedColor: selectedColor,
-                    image: product.imagePaths[selectedColor],
-                    quantity: 1
-                });
-                this.$q.notify({
-                    type: "positive",
-                    message: `${product.name} (${selectedColor}) added to cart!`,
-                    position: "top"
-                });
-            } catch (err) {
-                this.$q.notify({
-                    type: "negative",
-                    message: `Failed to add product to cart: ${err.message}`,
-                    position: "top"
-                });
-            } finally {
-                this.addingToCart = null;
-            }
+        openProductDetails(product) {
+            this.$router.push({ name: 'productDetail', params: { id: product.productId } });
         }
     }
 };
 </script>
 
 <style scoped>
-/* Page background gradient */
-.page-gradient {
-    background: linear-gradient(135deg, #fdfbfb, #ebedee, #dfe9f3);
-    min-height: 100vh;
+.white-input .q-field__label,
+.white-input .q-field__native,
+.white-input .q-field__control,
+.white-input input,
+.white-input .q-select__dropdown-icon {
+    color: #fff !important;
 }
 
-/* Product card styling */
-.product-card {
-    display: flex;
-    flex-direction: column;
+.buyer-dashboard-page {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, rgba(40, 44, 52, 1), rgba(15, 17, 20, 1));
+    color: white;
+}
+
+.product-card-dark {
+    background: rgba(30, 32, 38, 0.9);
     border-radius: 14px;
-    overflow: hidden;
-    background: white;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.product-card:hover {
+.product-card-dark:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
 }
 
-/* Product image container */
-.product-image {
-    position: relative;
-    width: 100%;
-    padding-top: 75%;
-    background-color: #f9f9f9;
-    overflow: hidden;
+.product-img-dark {
+    border-radius: 12px;
+    background: #222;
 }
 
-.product-image img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.35s ease;
+.text-primary {
+    color: #00b4d8 !important;
 }
 
-.product-image:hover img {
-    transform: scale(1.06);
-}
-
-/* No image placeholder */
-.no-image {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f5f5f5;
-}
-
-/* Strike-through price */
-.text-strike {
-    text-decoration: line-through;
-    color: #888;
-}
-
-/* Typography tweaks */
 .text-h6 {
     font-size: 1.1rem;
     font-weight: 600;
 }
 
 .text-subtitle2 {
-    color: #777;
+    color: #b0b0b0;
     font-size: 0.9rem;
 }
 
-/* Search filter section spacing */
 .search-filter {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(30, 32, 38, 0.7);
     padding: 12px;
     border-radius: 10px;
     backdrop-filter: blur(4px);
+}
+
+.no-image {
+    min-height: 200px;
 }
 </style>
