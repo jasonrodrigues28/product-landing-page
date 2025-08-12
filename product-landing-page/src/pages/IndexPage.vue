@@ -1,23 +1,30 @@
 <template>
-  <q-page class="login-page">
+  <q-page class="login-page flex flex-center">
     <q-card class="login-card q-pa-lg">
-      <q-card-section>
-        <div class="text-h6 text-center q-mb-md">Login</div>
-
-        <q-form @submit="onSubmit" class="q-gutter-md">
-          <q-input v-model="email" label="Email" type="email" outlined :rules="[val => !!val || 'Email is required']" />
-
-          <q-input v-model="password" label="Password" :type="isPwd ? 'password' : 'text'" outlined
-            :rules="[val => !!val || 'Password is required']">
-            <template v-slot:append>
-              <q-icon :name="isPwd ? 'visibility_off' : 'visibility'" class="cursor-pointer" @click="isPwd = !isPwd" />
-            </template>
-          </q-input>
-
-          <q-btn label="Login" type="submit" color="primary" class="full-width" :loading="loading" />
-          <q-btn label="Sign Up" flat color="secondary" class="full-width" @click="showSignup = true" />
-        </q-form>
+      <q-card-section class="text-center">
+        <div class="text-h5 text-white q-mt-md">Welcome</div>
       </q-card-section>
+
+      <q-form @submit="onSubmit" class="q-gutter-md">
+        <q-input v-model="email" label="Email" type="email" outlined dense class="white-input" label-color="white" />
+
+        <q-input v-model="password" :type="isPwd ? 'password' : 'text'" label="Password" outlined dense
+          class="dark-input" label-color="white">
+          <template v-slot:append>
+            <q-icon :name="isPwd ? 'visibility_off' : 'visibility'" class="cursor-pointer text-grey-5"
+              @click="isPwd = !isPwd" />
+          </template>
+        </q-input>
+
+        <q-btn label="Sign in" type="submit" color="grey-8" text-color="white" unelevated class="full-width rounded-btn"
+          :loading="loading" />
+
+      </q-form>
+
+      <div class="text-center text-grey-5 q-mt-md">
+        Don’t have an account?
+        <a href="#" class="signup-link" @click.prevent="showSignup = true">Sign up, it’s free!</a>
+      </div>
     </q-card>
 
     <!-- Signup Dialog -->
@@ -28,10 +35,10 @@
         </q-card-section>
 
         <q-card-section class="q-gutter-md">
-          <q-input v-model="signupData.name" label="Name" outlined />
-          <q-input v-model="signupData.email" label="Email" outlined />
-          <q-input v-model="signupData.password" label="Password" type="password" outlined />
-          <q-select v-model="signupData.role" :options="['buyer', 'seller']" label="Role" outlined />
+          <q-input v-model="signupData.name" label="Name" outlined dense />
+          <q-input v-model="signupData.email" label="Email" outlined dense />
+          <q-input v-model="signupData.password" label="Password" type="password" outlined dense />
+          <q-select v-model="signupData.role" :options="['buyer', 'seller']" label="Role" outlined dense />
         </q-card-section>
 
         <q-card-actions align="right">
@@ -111,30 +118,34 @@ export default {
 <style scoped>
 .login-page {
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(135deg, #6a11cb, #2575fc);
-  padding: 20px;
+  background: radial-gradient(circle at top, rgba(40, 44, 52, 1), rgba(15, 17, 20, 1));
+  background-size: cover;
+  color: white;
 }
 
 .login-card {
   width: 100%;
-  max-width: 400px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+  max-width: 380px;
+  background: rgba(38, 92, 255, 0.205);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
-.q-input {
-  font-size: 14px;
-}
-
-.q-btn.full-width {
+.dark-input .q-field__control {
+  background-color: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
+  color: white;
 }
 
-.q-dialog .q-card {
-  border-radius: 10px;
+.rounded-btn {
+  border-radius: 12px;
+  color: white;
+}
+
+.signup-link {
+  color: white;
+  text-decoration: underline;
+  cursor: pointer;
 }
 </style>
