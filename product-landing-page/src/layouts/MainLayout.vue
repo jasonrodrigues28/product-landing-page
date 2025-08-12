@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header elevated class="bg-primary text-white">
+    <q-header elevated class="bg-primary text-white" v-if="$route.name !== 'login'">
       <q-toolbar>
         <q-toolbar-title>Product Landing Page</q-toolbar-title>
 
@@ -9,33 +9,14 @@
         <!-- Navigation Links (show based on user role) -->
         <template v-if="userStore.isAuthenticated">
           <!-- Shop link for buyers -->
-          <q-btn
-            v-if="userStore.checkIsBuyer()"
-            flat
-            no-caps
-            :color="$route.path === '/buyer' ? 'yellow' : 'white'"
-            label="Shop"
-            to="/buyer"
-            class="q-mx-sm"
-          />
+          <q-btn v-if="userStore.checkIsBuyer()" flat no-caps :color="$route.path === '/buyer' ? 'yellow' : 'white'"
+            label="Shop" to="/buyer" class="q-mx-sm" />
           <!-- Seller Dashboard for sellers -->
-          <q-btn
-            v-if="userStore.checkIsSeller()"
-            flat
-            no-caps
-            :color="$route.path === '/seller' ? 'yellow' : 'white'"
-            label="Seller Dashboard"
-            to="/seller"
-            class="q-mx-sm"
-          />
-          
+          <q-btn v-if="userStore.checkIsSeller()" flat no-caps :color="$route.path === '/seller' ? 'yellow' : 'white'"
+            label="Seller Dashboard" to="/seller" class="q-mx-sm" />
+
           <!-- User Menu -->
-          <q-btn
-            flat
-            dense
-            round
-            icon="account_circle"
-          >
+          <q-btn flat dense round icon="account_circle">
             <q-menu>
               <q-list style="min-width: 150px">
                 <q-item clickable v-close-popup>
@@ -51,17 +32,9 @@
               </q-list>
             </q-menu>
           </q-btn>
-          
+
           <!-- Cart Button (only for buyers) -->
-          <q-btn 
-            v-if="userStore.checkIsBuyer()"
-            flat 
-            round 
-            dense 
-            icon="shopping_cart" 
-            to="/cart" 
-            class="q-ml-sm"
-          >
+          <q-btn v-if="userStore.checkIsBuyer()" flat round dense icon="shopping_cart" to="/cart" class="q-ml-sm">
             <q-badge v-if="totalItems > 0" color="red" floating transparent :label="totalItems" />
           </q-btn>
         </template>
