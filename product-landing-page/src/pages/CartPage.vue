@@ -1,14 +1,14 @@
 <template>
-    <q-page class="q-pa-md">
+    <q-page class="q-pa-md cart-page">
         <div class="text-h5 q-mb-md">Your Cart</div>
 
-        <q-card v-if="cart.length === 0" class="q-pa-md">
+        <q-card v-if="cart.length === 0" class="q-pa-md empty-cart">
             <div class="text-subtitle1">Your cart is empty.</div>
         </q-card>
 
         <div v-else>
-            <q-card v-for="item in cart" :key="item.id" class="q-mb-md">
-                <q-img :src="item.image" :ratio="16 / 9" />
+            <q-card v-for="item in cart" :key="item.id" class="q-mb-md cart-item-card">
+                <q-img :src="item.image" :ratio="16 / 9" class="cart-img full-width" />
 
                 <q-card-section>
                     <div class="text-h6">{{ item.title }}</div>
@@ -88,3 +88,39 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.cart-page {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, rgba(40, 44, 52, 1), rgba(15, 17, 20, 1));
+    color: white;
+}
+
+.empty-cart {
+    background: rgba(30, 32, 38, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    color: white;
+}
+
+.cart-item-card {
+    background: rgba(30, 32, 38, 0.9);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    color: white;
+    max-width: 500px;
+}
+
+.cart-img {
+    object-fit: cover;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.rounded-btn {
+    border-radius: 12px;
+}
+</style>
