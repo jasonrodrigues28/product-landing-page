@@ -2,20 +2,11 @@
   <q-page class="q-pa-md">
     <div class="row q-mb-md items-center justify-between">
       <h5 class="q-my-none">Available Products</h5>
-      <q-btn
-        icon="shopping_cart"
-        color="primary"
-        :to="{ path: '/cart' }"
-        label="Cart"
-      />
+      <q-btn icon="shopping_cart" color="primary" :to="{ path: '/cart' }" label="Cart" />
     </div>
 
     <div class="row q-col-gutter-md">
-      <div
-        v-for="product in productList"
-        :key="product.productId"
-        class="col-12 col-sm-6 col-md-4"
-      >
+      <div v-for="product in productList" :key="product.productId" class="col-12 col-sm-6 col-md-4">
         <q-card>
           <q-card-section>
             <div class="text-h6">{{ product.name }}</div>
@@ -35,13 +26,8 @@
           </q-card-section>
 
           <q-card-actions align="right">
-            <q-btn
-              flat
-              color="primary"
-              label="Add to Cart"
-              @click="addToCart(product)"
-              :disable="product.quantity <= 0"
-            />
+            <q-btn flat color="primary" label="Add to Cart" @click="addToCart(product)"
+              :disable="product.quantity <= 0" />
           </q-card-actions>
         </q-card>
       </div>

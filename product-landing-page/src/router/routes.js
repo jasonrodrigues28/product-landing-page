@@ -60,12 +60,6 @@ const routes = [
         component: () => import('../pages/CartPage.vue'),
         beforeEnter: requireAuth,
       },
-      {
-        path: '/product/:id',
-        name: 'productDetail',
-        component: () => import('../pages/ProductDetailPage.vue'),
-        beforeEnter: requireBuyer,
-      },
     ],
   },
 

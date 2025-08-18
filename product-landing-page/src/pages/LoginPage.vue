@@ -8,41 +8,21 @@
 
             <q-card-section>
                 <q-form @submit.prevent="handleLogin" class="q-gutter-md">
-                    <q-input
-                        v-model="email"
-                        label="Email"
-                        type="email"
-                        outlined
-                        :rules="[
-                            val => !!val || 'Email is required',
-                            val => validateEmail(val) || 'Please enter a valid email'
-                        ]"
-                    />
-                    
-                    <q-input
-                        v-model="password"
-                        label="Password"
-                        :type="showPassword ? 'text' : 'password'"
-                        outlined
-                        :rules="[val => !!val || 'Password is required']"
-                    >
+                    <q-input v-model="email" label="Email" type="email" outlined :rules="[
+                        val => !!val || 'Email is required',
+                        val => validateEmail(val) || 'Please enter a valid email'
+                    ]" />
+
+                    <q-input v-model="password" label="Password" :type="showPassword ? 'text' : 'password'" outlined
+                        :rules="[val => !!val || 'Password is required']">
                         <template v-slot:append>
-                            <q-icon
-                                :name="showPassword ? 'visibility_off' : 'visibility'"
-                                class="cursor-pointer"
-                                @click="showPassword = !showPassword"
-                            />
+                            <q-icon :name="showPassword ? 'visibility_off' : 'visibility'" class="cursor-pointer"
+                                @click="showPassword = !showPassword" />
                         </template>
                     </q-input>
 
                     <div>
-                        <q-btn
-                            type="submit"
-                            color="primary"
-                            label="Login"
-                            class="full-width"
-                            :loading="loading"
-                        />
+                        <q-btn type="submit" color="primary" label="Login" class="full-width" :loading="loading" />
                     </div>
                 </q-form>
             </q-card-section>
@@ -82,7 +62,7 @@ export default {
         },
         handleLogin() {
             this.loading = true;
-            
+
             // Simple validation
             if (!this.email || !this.password) {
                 this.$q.notify({
@@ -106,7 +86,7 @@ export default {
                     message: "Login successful!",
                     position: 'top'
                 });
-                
+
                 // Redirect to the original destination or seller dashboard
                 const redirectPath = this.route.query.redirect || '/seller';
                 this.router.push(redirectPath);
@@ -117,7 +97,7 @@ export default {
                     position: 'top'
                 });
             }
-            
+
             this.loading = false;
         }
     }

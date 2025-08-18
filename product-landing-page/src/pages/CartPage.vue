@@ -6,32 +6,26 @@
             <div class="text-subtitle1">Your cart is empty.</div>
         </q-card>
 
-        <!-- Cart Items -->
         <div v-else>
             <q-card v-for="item in cart" :key="item.id" class="q-mb-md cart-item-card">
                 <q-img :src="item.image" :ratio="16 / 9" class="cart-img full-width" />
 
                 <q-card-section>
-                    <div class="text-h6 text-white">{{ item.title }}</div>
-                    <div class="text-subtitle2 text-grey-4">Qty: {{ item.quantity }}</div>
-                    <div class="text-bold text-primary">
+                    <div class="text-h6">{{ item.title }}</div>
+                    <div class="text-subtitle2 text-grey">Qty: {{ item.quantity }}</div>
+                    <div class="text-bold">
                         ₹ {{ item.price }} x {{ item.quantity }} = ₹ {{ item.price * item.quantity }}
                     </div>
                 </q-card-section>
 
                 <q-card-actions align="right">
-                    <q-btn flat round color="negative" icon="delete" @click="removeFromCart(item.id)" />
+                    <q-btn flat color="negative" icon="delete" @click="removeFromCart(item.id)" />
                 </q-card-actions>
             </q-card>
 
-            <!-- Total -->
-            <div class="text-h6 text-right q-mt-lg text-white">
-                Total: <span class="text-primary">₹ {{ totalPrice }}</span>
-            </div>
+            <div class="text-h6 q-mt-lg">Total: ₹ {{ totalPrice }}</div>
 
-            <!-- Checkout -->
-            <q-btn label="Proceed to Checkout" color="primary" class="q-mt-md full-width rounded-btn" @click="checkout"
-                icon="payment" />
+            <q-btn label="Checkout" color="primary" class="q-mt-md" @click="checkout" />
         </div>
     </q-page>
 </template>
@@ -57,13 +51,13 @@ export default {
         async checkout() {
             try {
                 const productStore = useProductStore();
-                
+
                 // First check if all items have sufficient stock
                 const insufficientStock = this.items.find(item => {
                     const product = productStore.productList.find(p => p.productId === item.id);
                     if (!product) return true;
-                    const currentStock = item.selectedColor ? 
-                        (product.stockByColor?.[item.selectedColor] || 0) : 
+                    const currentStock = item.selectedColor ?
+                        (product.stockByColor?.[item.selectedColor] || 0) :
                         (product.stock || 0);
                     return currentStock < item.quantity;
                 });
@@ -74,18 +68,18 @@ export default {
 
                 // Update stock in product store
                 productStore.checkout(this.items);
-                
+
                 // Clear the cart
                 this.clearCart();
-                
-                this.$q.notify({ 
-                    type: 'positive', 
+
+                this.$q.notify({
+                    type: 'positive',
                     message: 'Checkout complete! Thank you for your purchase.',
                     position: 'top'
                 });
             } catch (error) {
-                this.$q.notify({ 
-                    type: 'negative', 
+                this.$q.notify({
+                    type: 'negative',
                     message: error.message || 'Failed to complete checkout',
                     position: 'top'
                 });

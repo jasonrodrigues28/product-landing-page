@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import usersData from '../configs/users.json'
 
 export const useUserStore = defineStore('user', {
   state: () => {

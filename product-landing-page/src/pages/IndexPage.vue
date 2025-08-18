@@ -162,21 +162,4 @@ export default {
 .white-input :deep(.q-field__label) {
   color: #ffffff;
 }
-
-.dark-input .q-field__control {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  color: white;
-}
-
-.rounded-btn {
-  border-radius: 12px;
-  color: white;
-}
-
-.signup-link {
-  color: white;
-  text-decoration: underline;
-  cursor: pointer;
-}
 </style>
