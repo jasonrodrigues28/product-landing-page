@@ -1,0 +1,4 @@
+{
+  "passwordMinLength": 8,
+  "requireSpecialChar": true
+}

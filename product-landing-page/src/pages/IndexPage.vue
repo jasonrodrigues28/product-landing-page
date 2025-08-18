@@ -52,6 +52,7 @@
 
 <script>
 import { useUserStore } from 'src/stores/user'
+import validationConfig from 'src/configs/validation.json'
 
 export default {
   name: 'IndexPage',
@@ -68,9 +69,33 @@ export default {
   },
 
   methods: {
+    validatePassword(password) {
+      if (!password) return false;
+      if (password.length < validationConfig.passwordMinLength) {
+        this.$q.notify({
+          color: 'negative',
+          message: `Password must be at least ${validationConfig.passwordMinLength} characters`
+        });
+        return false;
+      }
+      if (validationConfig.requireSpecialChar && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        this.$q.notify({
+          color: 'negative',
+          message: 'Password must contain at least one special character'
+        });
+        return false;
+      }
+      return true;
+    },
     async onSubmit() {
       this.loading = true
       const userStore = useUserStore()
+
+      // Password validation using config
+      if (!this.validatePassword(this.password)) {
+        this.loading = false;
+        return;
+      }
 
       try {
         const success = await userStore.login({
@@ -101,6 +126,11 @@ export default {
       if (!name || !email || !password || !role) {
         this.$q.notify({ color: 'negative', message: 'Please fill all fields' })
         return
+      }
+
+      // Password validation using config
+      if (!this.validatePassword(password)) {
+        return;
       }
 
       const result = userStore.registerUser({ name, email, password, role })
