@@ -9,7 +9,8 @@ export const useProductStore = defineStore('product', {
       productList: [],
       currentProductId: 1,
       highestUsedId: 0,
-      availableIds: new Set()
+      availableIds: new Set(),
+      cartItems: []
     };
 
     if (savedState) {
@@ -90,12 +91,26 @@ export const useProductStore = defineStore('product', {
           this.currentProductId = nextId + 1;
         }
         
-        // Create the product with the determined ID
+        // Create the product with the determined ID and initialize stock by color
+        const stockByColor = {};
+        if (product.colorVariants?.length > 0) {
+          product.colorVariants.forEach(color => {
+            stockByColor[color] = product.stock || 50; // Use provided stock or default to 50
+          });
+        }
+
+        const unitsSoldByColor = product.colorVariants?.length
+          ? Object.fromEntries(product.colorVariants.map(c => [c, 0]))
+          : {}; // empty when no variants
+
         const newProduct = {
           ...product,
           productId: `${this.sellerInitials}-${nextId}`,
           createdAt: timestamp,
-          updatedAt: timestamp
+          updatedAt: timestamp,
+          stockByColor,
+          unitsSold: 0, // aggregate (backwards compatibility)
+          unitsSoldByColor
         };
         
         // Update the highest used ID if necessary
@@ -122,10 +137,26 @@ export const useProductStore = defineStore('product', {
           this.currentProductId = this.highestUsedId + 1;
         }
         
+        const existing = this.productList[index];
+        // Preserve / merge unitsSoldByColor; if variants changed, initialize new colors
+        let unitsSoldByColor = existing.unitsSoldByColor || {};
+        if (updatedProduct.colorVariants?.length) {
+          const nextMap = {};
+            updatedProduct.colorVariants.forEach(c => {
+              nextMap[c] = unitsSoldByColor[c] || 0;
+            });
+          unitsSoldByColor = nextMap;
+        } else if (!updatedProduct.colorVariants?.length) {
+          unitsSoldByColor = {}; // no variants anymore
+        }
+        // Recompute aggregate
+        const aggregateUnitsSold = Object.values(unitsSoldByColor).reduce((a,b)=>a+b, existing.unitsSold || 0);
         this.productList[index] = {
           ...updatedProduct,
-          createdAt: this.productList[index].createdAt, // Preserve original creation date
-          updatedAt: new Date().toISOString() // Update the modification date
+          unitsSoldByColor,
+          unitsSold: aggregateUnitsSold,
+          createdAt: existing.createdAt,
+          updatedAt: new Date().toISOString()
         };
         this.saveToLocalStorage();
       }
@@ -188,7 +219,118 @@ export const useProductStore = defineStore('product', {
       this.currentProductId = 1;
       this.highestUsedId = 0;
       this.availableIds.clear();
+      this.cartItems = [];
       localStorage.removeItem('productStore'); // Completely clear the stored state
+    },
+
+    updateProductStock(productId, newStock, color) {
+      const index = this.productList.findIndex(p => p.productId === productId);
+      if (index !== -1) {
+        // Initialize stockByColor if it doesn't exist
+        if (!this.productList[index].stockByColor) {
+          this.productList[index].stockByColor = {};
+          // If we have old stock data, distribute it evenly among colors
+          if (this.productList[index].stock !== undefined) {
+            const stockPerColor = Math.floor(this.productList[index].stock / (this.productList[index].colorVariants?.length || 1));
+            this.productList[index].colorVariants?.forEach(c => {
+              this.productList[index].stockByColor[c] = stockPerColor;
+            });
+            delete this.productList[index].stock;
+          } else {
+            // Initialize stock for each color variant with default value
+            this.productList[index].colorVariants?.forEach(c => {
+              this.productList[index].stockByColor[c] = this.productList[index].stockByColor[c] || 50; // Default stock per color
+            });
+          }
+        }
+
+        // Update stock for specific color
+        if (color && this.productList[index].colorVariants?.includes(color)) {
+          // Ensure the color exists in stockByColor and is a valid color variant
+          this.productList[index].stockByColor[color] = Math.max(0, newStock);
+        } else if (this.productList[index].colorVariants?.length === 1) {
+          // If there's only one color, use it
+          this.productList[index].stockByColor[this.productList[index].colorVariants[0]] = Math.max(0, newStock);
+        }
+        
+        this.productList[index].updatedAt = new Date().toISOString();
+        this.saveToLocalStorage();
+      }
+    },
+
+    incrementUnitsSold(productId, quantity = 1, color = null) {
+      const index = this.productList.findIndex(p => p.productId === productId);
+      if (index === -1) return;
+      const product = this.productList[index];
+      // Color-specific path
+      if (color && product.colorVariants?.includes(color)) {
+        if (!product.unitsSoldByColor) product.unitsSoldByColor = {};
+        product.unitsSoldByColor[color] = (product.unitsSoldByColor[color] || 0) + quantity;
+        product.unitsSold = Object.values(product.unitsSoldByColor).reduce((a,b)=>a+b,0);
+      } else {
+        // Legacy / no-color path
+        product.unitsSold = (product.unitsSold || 0) + quantity;
+      }
+      product.updatedAt = new Date().toISOString();
+      this.saveToLocalStorage();
+    },
+
+    addToCart(productId, quantity) {
+      const product = this.productList.find(p => p.productId === productId);
+      if (product && product.stock >= quantity) {
+        const cartItem = {
+          productId,
+          quantity,
+          addedAt: new Date().toISOString()
+        };
+        this.cartItems.push(cartItem);
+        this.saveToLocalStorage();
+        return true;
+      }
+      return false;
+    },
+
+    removeFromCart(productId) {
+      const index = this.cartItems.findIndex(item => item.productId === productId);
+      if (index !== -1) {
+        // Restore stock
+        const item = this.cartItems[index];
+        const productIndex = this.productList.findIndex(p => p.productId === productId);
+        if (productIndex !== -1) {
+          this.productList[productIndex].stock += item.quantity;
+          this.productList[productIndex].unitsSold -= item.quantity;
+        }
+        // Remove from cart
+        this.cartItems.splice(index, 1);
+        this.saveToLocalStorage();
+      }
+    },
+
+  checkout(cartItems) {
+      // Process each item in the cart
+      cartItems.forEach(item => {
+        const product = this.productList.find(p => p.productId === item.id);
+        if (!product) return;
+
+        if (item.selectedColor) {
+          // Handle color-specific stock
+          if (product.stockByColor?.[item.selectedColor] >= item.quantity) {
+            product.stockByColor[item.selectedColor] -= item.quantity;
+      // Increment color-specific units sold
+      if (!product.unitsSoldByColor) product.unitsSoldByColor = {};
+      product.unitsSoldByColor[item.selectedColor] = (product.unitsSoldByColor[item.selectedColor] || 0) + item.quantity;
+      product.unitsSold = Object.values(product.unitsSoldByColor).reduce((a,b)=>a+b,0);
+          }
+        } else {
+          // Handle regular stock
+          if (product.stock >= item.quantity) {
+            product.stock -= item.quantity;
+            product.unitsSold = (product.unitsSold || 0) + item.quantity;
+          }
+        }
+      });
+      
+      this.saveToLocalStorage();
     }
   }
 });

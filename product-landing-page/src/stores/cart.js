@@ -2,28 +2,44 @@ import { defineStore } from 'pinia'
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
-    items: [], // each item = { id, title, price, quantity }
+    items: [], // each item = { id, title, price, quantity, selectedColor }
   }),
 
   actions: {
     addToCart(product) {
-      const existing = this.items.find((item) => item.id === product.id)
+      // Check for existing item with same id AND color
+      const existing = this.items.find((item) => 
+        item.id === product.id && item.selectedColor === product.selectedColor
+      );
       if (existing) {
-        existing.quantity++
+        existing.quantity += product.quantity || 1;
       } else {
         this.items.push({
           ...product,
-          quantity: 1,
-        })
+          quantity: product.quantity || 1,
+        });
       }
     },
 
-    removeFromCart(productId) {
-      this.items = this.items.filter((item) => item.id !== productId)
+    updateProductStock(product, store) {
+      if (product.selectedColor) {
+        // Update color-specific stock
+        store.updateProductStock(
+          product.id, 
+          product.stockByColor[product.selectedColor] - product.quantity, 
+          product.selectedColor
+        );
+      }
+    },
+
+    removeFromCart(itemToRemove) {
+      this.items = this.items.filter((item) => 
+        !(item.id === itemToRemove.id && item.selectedColor === itemToRemove.selectedColor)
+      );
     },
 
     clearCart() {
-      this.items = []
+      this.items = [];
     },
   },
 

@@ -38,6 +38,27 @@
           <q-td key="discountPercent" :props="props">{{ props.row.hasDiscount ? props.row.discountPercent + '%' : '-' }}</q-td>
           <q-td key="originalPrice" :props="props">{{ props.row.originalPrice }}</q-td>
           <q-td key="finalPrice" :props="props">{{ props.row.hasDiscount ? props.row.finalPrice : props.row.originalPrice }}</q-td>
+          <q-td key="stock" :props="props" class="q-pa-md">
+            <div v-if="props.row.colorVariants?.length > 0">
+              <div v-for="color in props.row.colorVariants" :key="color" class="q-mb-sm">
+                <div class="text-caption">{{ color }}:</div>
+                <ProductQuantity
+                  :product-id="props.row.productId"
+                  :initial-stock="props.row.stockByColor?.[color] || 0"
+                  :is-seller="true"
+                  :selected-color="color"
+                  @stock-updated="onStockUpdated"
+                />
+              </div>
+            </div>
+            <ProductQuantity
+              v-else
+              :product-id="props.row.productId"
+              :initial-stock="props.row.stock || 0"
+              :is-seller="true"
+              @stock-updated="onStockUpdated"
+            />
+          </q-td>
           <q-td key="createdAt" :props="props">{{ formatDate(props.row.createdAt) }}</q-td>
           <q-td key="actions" :props="props">
             <q-btn 
@@ -70,15 +91,28 @@
   </div>
 </template>
 
+<style scoped>
+.q-table td {
+  white-space: normal;
+}
+
+.q-table td.stock-cell {
+  min-width: 250px;
+  padding: 12px;
+}
+</style>
+
 <script>
 import { useProductStore } from '../../stores/productStore';
 import productTableConfig from '../../configs/producttable.config.json';
 import EditProduct from '../EditProduct.vue';
+import ProductQuantity from '../common/ProductQuantity.vue';
 
 export default {
   name: 'ProductTable',
   components: {
-    EditProduct
+    EditProduct,
+    ProductQuantity
   },
   props: {
     deleteMode: Boolean
@@ -98,6 +132,15 @@ export default {
         { name: 'discountPercent', label: 'Discount %', field: 'discountPercent', align: 'center' },
         { name: 'originalPrice', label: 'Original Price', field: 'originalPrice', align: 'right', sortable: true },
         { name: 'finalPrice', label: 'Final Price', field: 'finalPrice', align: 'right', sortable: true },
+        { 
+          name: 'stock', 
+          label: 'Stock Management', 
+          field: 'stock',
+          align: 'left',
+          sortable: true,
+          style: 'width: 200px',
+          classes: 'stock-cell'
+        },
         { 
           name: 'createdAt', 
           label: 'Created', 
@@ -176,6 +219,10 @@ export default {
     handleDeleteCancel() {
       this.productsToDelete.clear();
       this.$emit('cancel');
+    },
+    onStockUpdated(productId, newStock, color) {
+      const store = useProductStore();
+      store.updateProductStock(productId, newStock, color);
     }
   },
   watch: {

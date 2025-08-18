@@ -9,15 +9,12 @@ export const useUserStore = defineStore('user', {
       username: '',
       role: '',
       email: '',
-      users: [],
     }
 
     if (savedState) {
       return JSON.parse(savedState)
     }
 
-    // If no store saved, load default users from JSON
-    defaultState.users = usersData
     return defaultState
   },
 
@@ -26,20 +23,17 @@ export const useUserStore = defineStore('user', {
       localStorage.setItem('userStore', JSON.stringify(this.$state))
     },
 
-    loadUsers() {
-      const storedUsers = localStorage.getItem('users')
-      if (storedUsers) {
-        this.users = JSON.parse(storedUsers)
-      } else {
-        this.users = usersData
-      }
-    },
-
     login(credentials) {
-      // Make sure we have the latest user list
-      this.loadUsers()
+      // Load registered users from localStorage
+      let users = JSON.parse(localStorage.getItem('users') || '[]')
 
-      const user = this.users.find(
+      // You can also append demo users if you want them always available
+      users = users.concat([
+        { email: 'seller@example.com', password: 'seller123', name: 'Seller', role: 'seller' },
+        { email: 'buyer@example.com', password: 'buyer123', name: 'Buyer', role: 'buyer' },
+      ])
+
+      const user = users.find(
         (u) => u.email === credentials.email && u.password === credentials.password,
       )
 
@@ -54,21 +48,21 @@ export const useUserStore = defineStore('user', {
 
       return false
     },
-
     registerUser(newUser) {
-      this.loadUsers()
+      // Load current users from localStorage if present
+      let users = JSON.parse(localStorage.getItem('users') || '[]')
 
-      if (this.users.find((u) => u.email === newUser.email)) {
+      // Prevent duplicates
+      if (users.find((u) => u.email === newUser.email)) {
         return { success: false, message: 'User already exists' }
       }
 
       const userToAdd = { id: Date.now(), ...newUser }
-      this.users.push(userToAdd)
+      users.push(userToAdd)
 
-      localStorage.setItem('users', JSON.stringify(this.users))
+      localStorage.setItem('users', JSON.stringify(users))
       return { success: true, message: 'Registration successful!' }
     },
-
     logout() {
       this.isAuthenticated = false
       this.username = ''

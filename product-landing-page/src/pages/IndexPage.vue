@@ -2,7 +2,7 @@
   <q-page class="login-page flex flex-center">
     <q-card class="login-card q-pa-lg">
       <q-card-section class="text-center">
-        <div class="text-h5 text-white q-mt-md">Welcome</div>
+        <div class="text-h3 text-white q-mt-md q-mb-md">Welcome</div>
       </q-card-section>
 
       <q-form @submit="onSubmit" class="q-gutter-md">
@@ -124,12 +124,43 @@ export default {
 }
 
 .login-card {
-  width: 100%;
-  max-width: 380px;
+  width: 100vh;
+  height: 75vh;
   background: rgba(38, 92, 255, 0.205);
   border-radius: 20px;
   backdrop-filter: blur(10px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  padding: 100px;
+}
+
+.dark-input .q-field__control {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: white;
+}
+
+.rounded-btn {
+  border-radius: 12px;
+  color: white;
+}
+
+.signup-link {
+  color: white;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Make input text light for the email field (white-input) */
+.white-input :deep(.q-field__control),
+.white-input :deep(.q-field__native),
+.white-input :deep(.q-placeholder) {
+  color: #ffffff;
+  caret-color: #ffffff;
+}
+
+/* Ensure label stays white when focused / floated */
+.white-input :deep(.q-field__label) {
+  color: #ffffff;
 }
 
 .dark-input .q-field__control {

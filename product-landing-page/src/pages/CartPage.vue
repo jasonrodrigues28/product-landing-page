@@ -1,17 +1,15 @@
 <template>
-    <q-page class="cart-page q-pa-md">
-        <div class="text-h5 text-bold q-mb-md">🛒 Your Cart</div>
+    <q-page class="q-pa-md cart-page">
+        <div class="text-h5 q-mb-md">Your Cart</div>
 
-        <!-- Empty Cart Message -->
-        <q-card v-if="cart.length === 0" class="q-pa-md text-center empty-cart">
-            <q-icon name="shopping_cart" size="64px" color="grey-5" />
-            <div class="text-subtitle1 q-mt-sm text-grey-5">Your cart is empty</div>
+        <q-card v-if="cart.length === 0" class="q-pa-md empty-cart">
+            <div class="text-subtitle1">Your cart is empty.</div>
         </q-card>
 
         <!-- Cart Items -->
         <div v-else>
             <q-card v-for="item in cart" :key="item.id" class="q-mb-md cart-item-card">
-                <q-img :src="item.image" :ratio="16 / 9" class="cart-img" />
+                <q-img :src="item.image" :ratio="16 / 9" class="cart-img full-width" />
 
                 <q-card-section>
                     <div class="text-h6 text-white">{{ item.title }}</div>
@@ -40,6 +38,7 @@
 
 <script>
 import { useCartStore } from '../stores/cart'
+import { useProductStore } from '../stores/productStore'
 import { mapState, mapActions } from 'pinia'
 
 export default {
@@ -55,9 +54,42 @@ export default {
     methods: {
         ...mapActions(useCartStore, ['removeFromCart', 'clearCart']),
 
-        checkout() {
-            this.$q.notify({ type: 'positive', message: 'Checkout complete!' })
-            this.clearCart()
+        async checkout() {
+            try {
+                const productStore = useProductStore();
+                
+                // First check if all items have sufficient stock
+                const insufficientStock = this.items.find(item => {
+                    const product = productStore.productList.find(p => p.productId === item.id);
+                    if (!product) return true;
+                    const currentStock = item.selectedColor ? 
+                        (product.stockByColor?.[item.selectedColor] || 0) : 
+                        (product.stock || 0);
+                    return currentStock < item.quantity;
+                });
+
+                if (insufficientStock) {
+                    throw new Error('Some items are out of stock');
+                }
+
+                // Update stock in product store
+                productStore.checkout(this.items);
+                
+                // Clear the cart
+                this.clearCart();
+                
+                this.$q.notify({ 
+                    type: 'positive', 
+                    message: 'Checkout complete! Thank you for your purchase.',
+                    position: 'top'
+                });
+            } catch (error) {
+                this.$q.notify({ 
+                    type: 'negative', 
+                    message: error.message || 'Failed to complete checkout',
+                    position: 'top'
+                });
+            }
         }
     }
 }
