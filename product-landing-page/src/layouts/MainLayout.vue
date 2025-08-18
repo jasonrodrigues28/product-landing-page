@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header elevated class="bg-primary text-white">
+    <q-header elevated class="bg-primary text-white" v-if="$route.name !== 'login'">
       <q-toolbar>
         <q-toolbar-title>Product Landing Page</q-toolbar-title>
 
