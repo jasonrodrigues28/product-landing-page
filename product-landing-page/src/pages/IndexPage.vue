@@ -2,7 +2,7 @@
   <q-page class="login-page flex flex-center">
     <q-card class="login-card q-pa-lg">
       <q-card-section class="text-center">
-        <div class="text-h3 text-white q-mt-md q-mb-md">Welcome</div>
+        <div class="text-h3 text-white q-mt-md q-mb-md">{{ appConfig.welcomeMessage }}</div>
       </q-card-section>
 
       <q-form @submit="onSubmit" class="q-gutter-md">
@@ -23,7 +23,8 @@
 
       <div class="text-center text-grey-5 q-mt-md">
         Don’t have an account?
-        <a href="#" class="signup-link" @click.prevent="showSignup = true">Sign up, it’s free!</a>
+        <a v-if="appConfig.enableSignup" href="#" class="signup-link" @click.prevent="showSignup = true">Sign up, it’s
+          free!</a>
       </div>
     </q-card>
 
@@ -38,7 +39,7 @@
           <q-input v-model="signupData.name" label="Name" outlined dense />
           <q-input v-model="signupData.email" label="Email" outlined dense />
           <q-input v-model="signupData.password" label="Password" type="password" outlined dense />
-          <q-select v-model="signupData.role" :options="['buyer', 'seller']" label="Role" outlined dense />
+          <q-select v-model="signupData.role" :options="roles" label="Role" outlined dense />
         </q-card-section>
 
         <q-card-actions align="right">
@@ -52,7 +53,7 @@
 
 <script>
 import { useUserStore } from 'src/stores/user'
-import validationConfig from 'src/configs/validation.json'
+import appConfig from 'src/configs/appConfig.json'
 
 export default {
   name: 'IndexPage',
@@ -64,21 +65,25 @@ export default {
       isPwd: true,
       loading: false,
       showSignup: false,
-      signupData: { name: '', email: '', password: '', role: '' }
+      signupData: { name: '', email: '', password: '', role: '' },
+      appConfig,
+      roles: appConfig.roles,
+      demoCredentials: appConfig.demoCredentials,
+      validation: appConfig.validation
     }
   },
 
   methods: {
     validatePassword(password) {
       if (!password) return false;
-      if (password.length < validationConfig.passwordMinLength) {
+      if (password.length < this.validation.passwordMinLength) {
         this.$q.notify({
           color: 'negative',
-          message: `Password must be at least ${validationConfig.passwordMinLength} characters`
+          message: `Password must be at least ${this.validation.passwordMinLength} characters`
         });
         return false;
       }
-      if (validationConfig.requireSpecialChar && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      if (this.validation.requireSpecialChar && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
         this.$q.notify({
           color: 'negative',
           message: 'Password must contain at least one special character'
