@@ -43,6 +43,11 @@ const routes = [
         component: IndexPage,
       },
       {
+        path: '/test',
+        name: 'test',
+        component:() => import('../pages/TemporaryTest.vue'), 
+      },
+      {
         path: '/seller',
         name: 'seller',
         component: () => import('../pages/SellerDashboard.vue'),
@@ -60,6 +65,13 @@ const routes = [
         component: () => import('../pages/CartPage.vue'),
         beforeEnter: requireAuth,
       },
+      {
+  path: '/product/:id',
+  name: 'productDetails',
+  component: () => import('../pages/ProductDetails.vue'),
+  props: true, // This passes the id param as a prop
+  beforeEnter: requireAuth,
+},
     ],
   },
 

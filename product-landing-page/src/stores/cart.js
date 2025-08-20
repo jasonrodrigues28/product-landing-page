@@ -21,15 +21,10 @@ export const useCartStore = defineStore('cart', {
       }
     },
 
-    updateProductStock(product, store) {
-      if (product.selectedColor) {
-        // Update color-specific stock
-        store.updateProductStock(
-          product.id,
-          product.stockByColor[product.selectedColor] - product.quantity,
-          product.selectedColor,
-        )
-      }
+    // This method is no longer used as we only update stock during checkout
+    updateProductStock() {
+      // Method kept for backward compatibility but no longer does anything
+      return
     },
 
     removeFromCart(itemToRemove) {

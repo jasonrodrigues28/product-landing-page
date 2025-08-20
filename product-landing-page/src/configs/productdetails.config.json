@@ -1,0 +1,29 @@
+{
+  "ui": {
+    "pageTitles": {
+      "default": "Product Details",
+      "withName": "%s - Product Details"
+    },
+    "sections": {
+      "details": "Product Information",
+      "specs": "Specifications",
+      "reviews": "Customer Reviews"
+    },
+    "buttons": {
+      "addToCart": "Add to Cart",
+      "buyNow": "Buy Now",
+      "addReview": "Write a Review",
+      "submitReview": "Submit Review"
+    }
+  },
+  "reviews": {
+    "sorting": ["newest", "highest", "lowest"],
+    "defaultSort": "newest",
+    "ratingLabels": ["Poor", "Fair", "Good", "Very Good", "Excellent"]
+  },
+  "gallery": {
+    "thumbnailsPosition": "bottom", 
+    "maxThumbnails": 5,
+    "zoomEnabled": true
+  }
+}

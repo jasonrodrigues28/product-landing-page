@@ -1,13 +1,13 @@
 <template>
     <q-page>
-        <AddProduct/>
+        <ProductReview/>
     </q-page>
 </template>
 <script>
-import AddProduct from '../components/AddProduct.vue';
+import ProductReview from '../components/ProductDisplay/ProductReview/ProductReview.vue';
 export default{
     components: {
-        AddProduct
+        ProductReview
     }
 }
 </script>

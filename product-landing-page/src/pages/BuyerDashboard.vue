@@ -21,20 +21,24 @@
         <div class="row q-col-gutter-md">
             <div v-for="product in filteredProducts" :key="product.productId" class="col-12 col-sm-6 col-md-4 col-lg-3">
                 <q-card class="product-card product-card-dark">
-                    <div class="product-image product-img-dark">
-                        <template v-if="product.imagePaths && Object.keys(product.imagePaths).length > 0">
-                            <img :src="product.imagePaths[selectedColors[product.productId] || product.colorVariants[0]]"
-                                :alt="product.name">
-                        </template>
-                        <div v-else class="no-image">
-                            <q-icon name="image" size="50px" color="grey-5" />
+                    <router-link :to="`/product/${product.productId}`" class="product-link">
+                        <div class="product-image product-img-dark">
+                            <template v-if="product.imagePaths && Object.keys(product.imagePaths).length > 0">
+                                <img :src="product.imagePaths[selectedColors[product.productId] || product.colorVariants[0]]"
+                                    :alt="product.name">
+                            </template>
+                            <div v-else class="no-image">
+                                <q-icon name="image" size="50px" color="grey-5" />
+                            </div>
                         </div>
-                    </div>
+                    </router-link>
 
                     <q-card-section class="bg-grey-2">
                         <div class="row items-center q-mt-sm">
                             <div class="col">
-                                <div class="text-h6">{{ product.name }}</div>
+                                <router-link :to="`/product/${product.productId}`" class="product-link">
+                                    <div class="text-h6">{{ product.name }}</div>
+                                </router-link>
                                 <div class="text-subtitle2">{{ product.category }}</div>
                             </div>
                         </div>
@@ -69,15 +73,7 @@
                             </q-chip>
                         </div>
 
-                        <div class="q-mt-md">
-                            <ProductQuantity
-                                :key="`${product.productId}-${selectedColors[product.productId] || product.colorVariants[0]}`"
-                                :product-id="product.productId"
-                                :initial-stock="product.stockByColor ? product.stockByColor[selectedColors[product.productId] || product.colorVariants[0]] : product.stock"
-                                :is-seller="false"
-                                :selected-color="selectedColors[product.productId] || product.colorVariants[0]"
-                                @added-to-cart="handleAddToCart($event, product)" />
-                        </div>
+                        
                     </q-card-section>
 
                     <q-card-section v-if="product.colorVariants && product.colorVariants.length">
@@ -111,13 +107,11 @@
 <script>
 import { useCartStore } from "../stores/cart";
 import { useProductStore } from "../stores/productStore";
-import ProductQuantity from "../components/common/ProductQuantity.vue";
+
 
 export default {
     name: "BuyerDashboard",
-    components: {
-        ProductQuantity
-    },
+    
 
     data() {
         return {
@@ -265,6 +259,11 @@ export default {
     background-color: #f5f5f5;
     border-radius: 4px 4px 0 0;
     overflow: hidden;
+}
+
+.product-link {
+    color: inherit;
+    text-decoration: none;
 }
 
 .product-image img {
