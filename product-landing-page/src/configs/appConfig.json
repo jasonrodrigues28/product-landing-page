@@ -1,0 +1,133 @@
+{
+  "appTitle": "Product Landing Page",
+  "welcomeMessage": "Welcome",
+  "enableSignup": true,
+  "showValidationBanner": true,
+  "roles": ["buyer", "seller"],
+  "validation": {
+    "passwordMinLength": 8,
+    "requireSpecialChar": true
+  },
+  "product": {
+    "fields": {
+      "title": {
+        "label": "Product Title",
+        "placeholder": "Enter product name",
+        "maxLength": 50
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Enter short description",
+        "maxLength": 200
+      },
+      "price": {
+        "label": "Price (₹)",
+        "min": 1,
+        "max": 100000
+      },
+      "image": {
+        "label": "Upload Product Image",
+        "acceptedTypes": ["image/jpeg", "image/png"]
+      }
+    },
+    "buttons": {
+      "upload": "Upload Product",
+      "update": "Update Product",
+      "delete": "Delete Product"
+    },
+    "messages": {
+      "success": "Product saved successfully!",
+      "error": "Something went wrong. Please try again."
+    }
+  },
+  "cart": {
+    "buttons": {
+      "addToCart": "Add to Cart",
+      "viewCart": "View Cart",
+      "checkout": "Proceed to Checkout",
+      "removeItem": "Remove",
+      "clearCart": "Clear Cart"
+    },
+    "messages": {
+      "emptyCart": "Your cart is empty.",
+      "itemAdded": "Item added to cart!",
+      "itemRemoved": "Item removed from cart.",
+      "purchaseSuccess": "Purchase completed successfully!",
+      "error": "Something went wrong. Please try again."
+    },
+    "cartLimits": {
+      "maxItemsPerCart": 20
+    }
+  },
+  "productTable": {
+    "table": {
+      "columns": [
+        { "name": "productId", "label": "Product ID", "field": "productId", "align": "left" },
+        { "name": "name", "label": "Name", "field": "name", "align": "left", "sortable": true },
+        { "name": "description", "label": "Description", "field": "description", "align": "left" },
+        { "name": "hasDiscount", "label": "Discount?", "field": "hasDiscount", "align": "center" },
+        {
+          "name": "discountPercent",
+          "label": "Discount %",
+          "field": "discountPercent",
+          "align": "center"
+        },
+        {
+          "name": "originalPrice",
+          "label": "Original Price",
+          "field": "originalPrice",
+          "align": "right",
+          "sortable": true
+        },
+        {
+          "name": "finalPrice",
+          "label": "Final Price",
+          "field": "finalPrice",
+          "align": "right",
+          "sortable": true
+        },
+        {
+          "name": "stock",
+          "label": "Stock Management",
+          "field": "stock",
+          "align": "left",
+          "sortable": true,
+          "style": "width: 200px",
+          "classes": "stock-cell"
+        },
+        {
+          "name": "createdAt",
+          "label": "Created",
+          "field": "createdAt",
+          "align": "center",
+          "sortable": true,
+          "format": "date"
+        },
+        { "name": "actions", "label": "Actions", "field": "actions", "align": "center" }
+      ]
+    },
+    "buttons": {
+      "save": {
+        "label": "Save",
+        "color": "primary"
+      },
+      "cancel": {
+        "label": "Cancel",
+        "color": "red"
+      }
+    },
+    "icons": {
+      "edit": "edit",
+      "delete": "delete"
+    }
+  },
+  "adminTable": {
+    "columns": [
+      { "name": "id", "label": "ID", "field": "id", "align": "left" },
+      { "name": "name", "label": "Name", "field": "name", "align": "left" },
+      { "name": "email", "label": "Email", "field": "email", "align": "left" },
+      { "name": "role", "label": "Role", "field": "role", "align": "left" },
+      { "name": "actions", "label": "Actions", "field": "actions", "align": "center" }
+    ]
+  }
+}
