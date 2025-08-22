@@ -120,5 +120,14 @@
       "edit": "edit",
       "delete": "delete"
     }
+  },
+  "adminTable": {
+    "columns": [
+      { "name": "id", "label": "ID", "field": "id", "align": "left" },
+      { "name": "name", "label": "Name", "field": "name", "align": "left" },
+      { "name": "email", "label": "Email", "field": "email", "align": "left" },
+      { "name": "role", "label": "Role", "field": "role", "align": "left" },
+      { "name": "actions", "label": "Actions", "field": "actions", "align": "center" }
+    ]
   }
 }
