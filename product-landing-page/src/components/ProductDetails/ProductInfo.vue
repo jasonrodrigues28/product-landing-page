@@ -74,7 +74,6 @@
 </template>
 
 <script>
-import { computed } from 'vue'
 import { useReviewStore } from 'src/stores/reviewStore'
 
 export default {
@@ -85,35 +84,42 @@ export default {
       required: true
     }
   },
-  setup(props) {
-    const reviewStore = useReviewStore()
-    
+  
+  data() {
+    return {
+      reviewStore: useReviewStore()
+    }
+  },
+  
+  computed: {
     // Calculate total stock across all colors
-    const getTotalStock = computed(() => {
-      if (!props.product) return 0
+    getTotalStock() {
+      if (!this.product) return 0
       
-      if (props.product.stockByColor) {
-        return Object.values(props.product.stockByColor).reduce((sum, stock) => sum + stock, 0)
+      if (this.product.stockByColor) {
+        return Object.values(this.product.stockByColor).reduce((sum, stock) => sum + stock, 0)
       }
       
-      return props.product.stock || 0
-    })
+      return this.product.stock || 0
+    },
     
     // Review information
-    const averageRating = computed(() => {
-      return reviewStore.averageRating(props.product.productId) || 0
-    })
+    averageRating() {
+      return this.reviewStore.averageRating(this.product.productId) || 0
+    },
     
-    const reviewCount = computed(() => {
-      return reviewStore.reviewCount(props.product.productId) || 0
-    })
+    reviewCount() {
+      return this.reviewStore.reviewCount(this.product.productId) || 0
+    },
     
-    const hasReviews = computed(() => {
-      return reviewCount.value > 0
-    })
-    
+    hasReviews() {
+      return this.reviewCount > 0
+    }
+  },
+  
+  methods: {
     // Assign color classes
-    const getColorClass = (colorName) => {
+    getColorClass(colorName) {
       const colorMap = {
         red: 'red',
         blue: 'blue',
@@ -129,14 +135,6 @@ export default {
       }
       
       return colorMap[colorName.toLowerCase()] || 'grey'
-    }
-    
-    return {
-      getTotalStock,
-      averageRating,
-      reviewCount,
-      hasReviews,
-      getColorClass
     }
   }
 }

@@ -148,12 +148,10 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
-import { useReviewStore } from 'src/stores/reviewStore'
-import { useUserStore } from 'src/stores/user'
-import { useQuasar } from 'quasar'
 import { date } from 'quasar'
 import ReviewForm from './ReviewForm.vue'
+import { useReviewStore } from 'src/stores/reviewStore'
+import { useUserStore } from 'src/stores/user'
 
 export default {
   name: 'ReviewList',
@@ -170,30 +168,35 @@ export default {
       required: true
     }
   },
-  setup(props) {
-    const $q = useQuasar()
-    const reviewStore = useReviewStore()
-    const userStore = useUserStore()
-    
-    const reviews = ref([])
-    const showAddReview = ref(true) // Always show the review form by default
-    const submitting = ref(false)
-    const sortBy = ref('newest')
-    
-    // Review form data
-    const review = ref({
-      rating: 0,
-      title: '',
-      comment: ''
-    })
-    
+  
+  data() {
+    return {
+      reviews: [],
+      showAddReview: true, // Always show the review form by default
+      submitting: false,
+      sortBy: 'newest',
+      
+      // Review form data
+      review: {
+        rating: 0,
+        title: '',
+        comment: ''
+      },
+      
+      // Store instances
+      reviewStore: useReviewStore(),
+      userStore: useUserStore()
+    }
+  },
+  
+  computed: {
     // Map rating labels
-    const ratingLabels = computed(() => {
-      return props.config.ratingLabels || ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
-    })
+    ratingLabels() {
+      return this.config.ratingLabels || ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
+    },
     
     // Sort options for dropdown
-    const sortOptions = computed(() => {
+    sortOptions() {
       const options = [
         { label: 'Newest', value: 'newest' },
         { label: 'Highest Rating', value: 'highest' },
@@ -201,65 +204,73 @@ export default {
       ]
       
       return options.filter(option => 
-        props.config.sorting?.includes(option.value)
+        this.config.sorting?.includes(option.value)
       )
-    })
+    },
     
     // Average rating
-    const averageRating = computed(() => {
-      if (reviews.value.length === 0) return 0
-      const sum = reviews.value.reduce((total, review) => total + review.rating, 0)
-      return sum / reviews.value.length
-    })
+    averageRating() {
+      if (this.reviews.length === 0) return 0
+      const sum = this.reviews.reduce((total, review) => total + review.rating, 0)
+      return sum / this.reviews.length
+    },
     
     // Review count
-    const reviewCount = computed(() => {
-      return reviews.value.length
-    })
+    reviewCount() {
+      return this.reviews.length
+    },
     
     // Get reviews sorted
-    const sortedReviews = computed(() => {
-      if (!reviews.value.length) return []
+    sortedReviews() {
+      if (!this.reviews.length) return []
       
-      return [...reviews.value].sort((a, b) => {
-        if (sortBy.value === 'newest') {
+      return [...this.reviews].sort((a, b) => {
+        if (this.sortBy === 'newest') {
           return new Date(b.date) - new Date(a.date)
-        } else if (sortBy.value === 'highest') {
+        } else if (this.sortBy === 'highest') {
           return b.rating - a.rating
-        } else if (sortBy.value === 'lowest') {
+        } else if (this.sortBy === 'lowest') {
           return a.rating - b.rating
         }
         return 0
       })
-    })
-    
-    // Calculate percentage for each star rating
-    const getRatingPercentage = (star) => {
-      if (reviews.value.length === 0) return 0
-      const count = reviews.value.filter(r => r.rating === star).length
-      return count / reviews.value.length
     }
+  },
+  
+  mounted() {
+    this.fetchReviews()
+    // Default sort
+    this.sortBy = this.config.defaultSort || 'newest'
+  },
+  
+  methods: {
+    // Calculate percentage for each star rating
+    getRatingPercentage(star) {
+      if (this.reviews.length === 0) return 0
+      const count = this.reviews.filter(r => r.rating === star).length
+      return count / this.reviews.length
+    },
     
     // Count for each star rating
-    const getRatingCount = (star) => {
-      return reviews.value.filter(r => r.rating === star).length
-    }
+    getRatingCount(star) {
+      return this.reviews.filter(r => r.rating === star).length
+    },
     
     // Format date
-    const formatDate = (dateString) => {
+    formatDate(dateString) {
       const dateObj = new Date(dateString)
       return date.formatDate(dateObj, 'MMMM D, YYYY')
-    }
+    },
     
     // Check if current user can manage this review
-    const canManageReview = (review) => {
-      return userStore.email === review.userId
-    }
+    canManageReview(review) {
+      return this.userStore.email === review.userId
+    },
     
     // Submit new review
-    const submitReview = async (reviewData) => {
+    async submitReview(reviewData) {
       if (!reviewData.rating) {
-        $q.notify({
+        this.$q.notify({
           type: 'warning',
           message: 'Please select a rating',
           position: 'top'
@@ -267,111 +278,83 @@ export default {
         return
       }
       
-      submitting.value = true
+      this.submitting = true
       
       try {
-        await reviewStore.addReview(props.productId, reviewData)
+        await this.reviewStore.addReview(this.productId, reviewData)
         
-        $q.notify({
+        this.$q.notify({
           type: 'positive',
           message: 'Review submitted successfully',
           position: 'top'
         })
         
-        // Keep the form visible - removed: showAddReview.value = false
+        // Keep the form visible
         
         // Refresh reviews
-        fetchReviews()
+        this.fetchReviews()
       } catch (error) {
-        $q.notify({
+        this.$q.notify({
           type: 'negative',
           message: `Failed to submit review: ${error.message}`,
           position: 'top'
         })
       } finally {
-        submitting.value = false
+        this.submitting = false
       }
-    }
+    },
     
     // Cancel adding review - just reset the form without hiding it
-    const cancelReview = () => {
-      // Form stays visible - removed: showAddReview.value = false
-      review.value = { rating: 0, title: '', comment: '' }
-    }
+    cancelReview() {
+      // Form stays visible
+      this.review = { rating: 0, title: '', comment: '' }
+    },
     
     // Delete a review
-    const deleteReview = async (reviewId) => {
-      $q.dialog({
+    deleteReview(reviewId) {
+      this.$q.dialog({
         title: 'Delete Review',
         message: 'Are you sure you want to delete this review?',
         cancel: true,
         persistent: true
       }).onOk(async () => {
         try {
-          await reviewStore.deleteReview(props.productId, reviewId)
+          await this.reviewStore.deleteReview(this.productId, reviewId)
           
-          $q.notify({
+          this.$q.notify({
             type: 'positive',
             message: 'Review deleted successfully',
             position: 'top'
           })
           
-          fetchReviews()
+          this.fetchReviews()
         } catch (error) {
-          $q.notify({
+          this.$q.notify({
             type: 'negative',
             message: `Failed to delete review: ${error.message}`,
             position: 'top'
           })
         }
       })
-    }
+    },
     
     // Mark review as helpful or not
-    const markHelpful = async (reviewId, isHelpful) => {
+    async markHelpful(reviewId, isHelpful) {
       try {
-        await reviewStore.markHelpful(props.productId, reviewId, isHelpful)
-        fetchReviews()
+        await this.reviewStore.markHelpful(this.productId, reviewId, isHelpful)
+        this.fetchReviews()
       } catch (error) {
-        $q.notify({
+        this.$q.notify({
           type: 'negative',
           message: `Failed to update review: ${error.message}`,
           position: 'top'
         })
       }
-    }
+    },
     
     // Fetch reviews for this product
-    const fetchReviews = () => {
-      reviews.value = reviewStore.getReviews(props.productId)
-    }
-    
-    // Initialize
-    onMounted(() => {
-      fetchReviews()
-      // Default sort
-      sortBy.value = props.config.defaultSort || 'newest'
-    })
-    
-    return {
-      reviews,
-      review,
-      showAddReview,
-      submitting,
-      sortBy,
-      sortOptions,
-      ratingLabels,
-      sortedReviews,
-      averageRating,
-      reviewCount,
-      getRatingPercentage,
-      getRatingCount,
-      formatDate,
-      canManageReview,
-      submitReview,
-      cancelReview,
-      deleteReview,
-      markHelpful
+    fetchReviews() {
+      this.reviews = this.reviewStore.getReviews(this.productId)
     }
   }
 }

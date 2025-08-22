@@ -60,10 +60,6 @@
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
-
 export default {
   name: 'ProductActions',
   props: {
@@ -76,126 +72,126 @@ export default {
       required: true
     }
   },
+  
   emits: ['add-to-cart'],
-  setup(props, { emit }) {
-    const $q = useQuasar()
-    const router = useRouter()
-    const quantity = ref(1)
-    const selectedColor = ref(props.product.colorVariants?.[0] || null)
-    const isAdding = ref(false)
-    
+  
+  data() {
+    return {
+      quantity: 1,
+      selectedColor: this.product.colorVariants?.[0] || null,
+      isAdding: false
+    }
+  },
+  
+  computed: {
     // Get stock for selected color
-    const getStockForSelectedColor = computed(() => {
-      if (!props.product) return 0
+    getStockForSelectedColor() {
+      if (!this.product) return 0
       
-      if (selectedColor.value && props.product.stockByColor) {
-        return props.product.stockByColor[selectedColor.value] || 0
+      if (this.selectedColor && this.product.stockByColor) {
+        return this.product.stockByColor[this.selectedColor] || 0
       }
       
-      return props.product.stock || 0
-    })
+      return this.product.stock || 0
+    },
     
     // Max quantity that can be added
-    const maxQuantity = computed(() => {
-      return Math.min(10, getStockForSelectedColor.value) // Limit to 10 or available stock
-    })
+    maxQuantity() {
+      return Math.min(10, this.getStockForSelectedColor) // Limit to 10 or available stock
+    },
     
     // Format color options for q-option-group
-    const colorOptions = computed(() => {
-      if (!props.product.colorVariants) return []
+    colorOptions() {
+      if (!this.product.colorVariants) return []
       
-      return props.product.colorVariants.map(color => ({
+      return this.product.colorVariants.map(color => ({
         label: color,
         value: color
       }))
-    })
+    },
     
     // Calculate total price
-    const totalPrice = computed(() => {
-      if (!props.product) return 0
+    totalPrice() {
+      if (!this.product) return 0
       
-      const price = props.product.hasDiscount ? 
-        props.product.finalPrice : 
-        props.product.originalPrice
+      const price = this.product.hasDiscount ? 
+        this.product.finalPrice : 
+        this.product.originalPrice
         
-      return (price * quantity.value).toFixed(2)
-    })
+      return (price * this.quantity).toFixed(2)
+    },
     
     // Check if we can add to cart
-    const canAddToCart = computed(() => {
-      return quantity.value > 0 && quantity.value <= maxQuantity.value
-    })
-    
+    canAddToCart() {
+      return this.quantity > 0 && this.quantity <= this.maxQuantity
+    }
+  },
+  
+  methods: {
     // Quantity control
-    const incrementQuantity = () => {
-      if (quantity.value < maxQuantity.value) {
-        quantity.value++
+    incrementQuantity() {
+      if (this.quantity < this.maxQuantity) {
+        this.quantity++
       }
-    }
+    },
     
-    const decrementQuantity = () => {
-      if (quantity.value > 1) {
-        quantity.value--
+    decrementQuantity() {
+      if (this.quantity > 1) {
+        this.quantity--
       }
-    }
+    },
     
-    const validateQuantity = () => {
-      if (!quantity.value || quantity.value < 1) {
-        quantity.value = 1
-      } else if (quantity.value > maxQuantity.value) {
-        quantity.value = maxQuantity.value
+    validateQuantity() {
+      if (!this.quantity || this.quantity < 1) {
+        this.quantity = 1
+      } else if (this.quantity > this.maxQuantity) {
+        this.quantity = this.maxQuantity
       }
-    }
+    },
     
     // Add to cart
-    const addToCart = async () => {
-      if (!canAddToCart.value) return
+    async addToCart() {
+      if (!this.canAddToCart) return
       
-      isAdding.value = true
+      this.isAdding = true
       
       try {
-        emit('add-to-cart', quantity.value, selectedColor.value)
+        this.$emit('add-to-cart', this.quantity, this.selectedColor)
         
-        $q.notify({
+        this.$q.notify({
           type: 'positive',
-          message: `Added ${quantity.value} item(s) to cart`,
+          message: `Added ${this.quantity} item(s) to cart`,
           position: 'top'
         })
       } catch (error) {
-        $q.notify({
+        this.$q.notify({
           type: 'negative',
           message: `Failed to add to cart: ${error.message}`,
           position: 'top'
         })
       } finally {
-        isAdding.value = false
+        this.isAdding = false
       }
-    }
+    },
     
     // Buy now
-    const buyNow = () => {
-      addToCart()
-      router.push('/cart')
+    buyNow() {
+      this.addToCart()
+      this.$router.push('/cart')
     }
-    
+  },
+  
+  watch: {
     // Reset quantity when product or color changes
-    watch([() => props.product, selectedColor], () => {
-      quantity.value = 1
-    })
+    product: {
+      handler() {
+        this.quantity = 1
+      },
+      deep: true
+    },
     
-    return {
-      quantity,
-      selectedColor,
-      isAdding,
-      maxQuantity,
-      colorOptions,
-      totalPrice,
-      canAddToCart,
-      incrementQuantity,
-      decrementQuantity,
-      validateQuantity,
-      addToCart,
-      buyNow
+    selectedColor() {
+      this.quantity = 1
     }
   }
 }

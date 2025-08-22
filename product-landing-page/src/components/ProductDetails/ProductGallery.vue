@@ -65,8 +65,6 @@
 </template>
 
 <script>
-import { ref, computed, watch, onMounted } from 'vue'
-
 export default {
   name: 'ProductGallery',
   props: {
@@ -83,43 +81,47 @@ export default {
       })
     }
   },
-  setup(props) {
-    const currentIndex = ref(0)
-    
+  
+  data() {
+    return {
+      currentIndex: 0
+    }
+  },
+  
+  computed: {
     // Compute current image
-    const currentImage = computed(() => {
-      return props.images[currentIndex.value] || { url: '', alt: 'No image available', color: '' }
-    })
+    currentImage() {
+      return this.images[this.currentIndex] || { url: '', alt: 'No image available', color: '' }
+    },
     
     // Check if we have color variants
-    const hasColorVariants = computed(() => {
-      return props.images.some(img => img.color)
-    })
-    
+    hasColorVariants() {
+      return this.images.some(img => img.color)
+    }
+  },
+  
+  methods: {
     // Set current image
-    const setCurrentImage = (index) => {
-      if (index >= 0 && index < props.images.length) {
-        currentIndex.value = index
+    setCurrentImage(index) {
+      if (index >= 0 && index < this.images.length) {
+        this.currentIndex = index
       }
     }
-    
+  },
+  
+  watch: {
     // Reset current index if images change
-    watch(() => props.images, () => {
-      currentIndex.value = 0
-    })
-    
-    onMounted(() => {
-      // Initialize with first image
-      if (props.images.length > 0) {
-        currentIndex.value = 0
+    images: {
+      handler() {
+        this.currentIndex = 0
       }
-    })
-    
-    return {
-      currentIndex,
-      currentImage,
-      hasColorVariants,
-      setCurrentImage
+    }
+  },
+  
+  mounted() {
+    // Initialize with first image
+    if (this.images.length > 0) {
+      this.currentIndex = 0
     }
   }
 }

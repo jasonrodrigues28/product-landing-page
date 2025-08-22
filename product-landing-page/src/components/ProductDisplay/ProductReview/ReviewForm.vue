@@ -178,32 +178,37 @@ export default {
         })
         return
       }
-      
+
       this.submitting = true
       const reviewStore = useReviewStore()
-      
+
       try {
         // Add images if any
         const reviewData = { ...this.review }
         if (this.allowImages && this.imagePreviewUrls.length > 0) {
           reviewData.images = this.imagePreviewUrls
         }
-        
+
         // Save review
         await reviewStore.addReview(this.productId, reviewData)
-        
+
         // Success notification
         this.$q.notify({
           type: 'positive',
           message: 'Review submitted successfully',
           position: 'top'
         })
-        
+
+        this.$refs.reviewForm.resetValidation();
         // Reset form
         this.review = { rating: 0, title: '', comment: '' }
         this.reviewImages = []
         this.imagePreviewUrls = []
+        // Reset validation state to clear errors
         
+          
+        
+
         // Emit event
         this.$emit('review-submitted')
       } catch (error) {
@@ -221,6 +226,10 @@ export default {
       this.review = { rating: 0, title: '', comment: '' }
       this.reviewImages = []
       this.imagePreviewUrls = []
+      // Reset validation state to clear errors
+      if (this.$refs.reviewForm) {
+        this.$refs.reviewForm.resetValidation();
+      }
       this.$emit('form-canceled')
     }
   },
