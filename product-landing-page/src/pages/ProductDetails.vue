@@ -80,7 +80,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { mapState } from 'pinia'
 import { useProductStore } from 'src/stores/productStore'
 import { useCartStore } from 'src/stores/cart'
 import productDetailsConfig from 'src/configs/productdetails.config.json'
@@ -90,6 +90,7 @@ import ProductGallery from 'src/components/ProductDetails/ProductGallery.vue'
 import ProductInfo from 'src/components/ProductDetails/ProductInfo.vue'
 import ProductActions from 'src/components/ProductDetails/ProductActions.vue'
 import ProductReview from '../components/ProductDisplay/ProductReview/ProductReview.vue'
+
 export default {
   name: 'ProductDetailsPage',
   components: {
@@ -97,7 +98,6 @@ export default {
     ProductInfo,
     ProductActions,
     ProductReview,
-    
   },
   props: {
     id: {
@@ -105,30 +105,30 @@ export default {
       required: true
     }
   },
-  setup(props) {
-    const productStore = useProductStore()
-    const cartStore = useCartStore()
+  data() {
+    return {
+      loading: true,
+      error: null,
+      config: productDetailsConfig
+    }
+  },
+  computed: {
+    ...mapState(useProductStore, ['productList']),
     
-    const loading = ref(true)
-    const error = ref(null)
-    const config = ref(productDetailsConfig)
-    
-    // Get product from store based on ID
-    const product = computed(() => {
-      const found = productStore.productList.find(p => p.productId === props.id)
+    product() {
+      const found = this.productList.find(p => p.productId === this.id)
       return found || null
-    })
+    },
     
-    // Prepare images for gallery
-    const productImages = computed(() => {
-      if (!product.value) return []
+    productImages() {
+      if (!this.product) return []
       
       // If product has image paths for colors
-      if (product.value.imagePaths && Object.keys(product.value.imagePaths).length) {
-        return Object.entries(product.value.imagePaths).map(([color, url]) => ({
+      if (this.product.imagePaths && Object.keys(this.product.imagePaths).length) {
+        return Object.entries(this.product.imagePaths).map(([color, url]) => ({
           url,
           color,
-          alt: `${product.value.name} in ${color}`
+          alt: `${this.product.name} in ${color}`
         }))
       }
       
@@ -136,45 +136,37 @@ export default {
       return [{
         url: '', // Default placeholder image
         color: '',
-        alt: product.value.name
+        alt: this.product.name
       }]
-    })
-    
-    // Handle adding to cart
-    const handleAddToCart = (quantity, color) => {
-      if (!product.value) return
+    }
+  },
+  mounted() {
+    // Validate product exists
+    if (!this.product) {
+      this.error = "Product not found"
+    }
+    this.loading = false
+  },
+  methods: {
+    handleAddToCart(quantity, color) {
+      if (!this.product) return
+      
+      const cartStore = useCartStore()
       
       const cartItem = {
-        id: product.value.productId,
-        title: product.value.name,
-        price: product.value.hasDiscount ? product.value.finalPrice : product.value.originalPrice,
-        image: color && product.value.imagePaths ? 
-          product.value.imagePaths[color] : Object.values(product.value.imagePaths)[0],
-        selectedColor: color || (product.value.colorVariants?.[0] || null),
+        id: this.product.productId,
+        title: this.product.name,
+        price: this.product.hasDiscount ? this.product.finalPrice : this.product.originalPrice,
+        image: color && this.product.imagePaths ? 
+          this.product.imagePaths[color] : Object.values(this.product.imagePaths)[0],
+        selectedColor: color || (this.product.colorVariants?.[0] || null),
         quantity,
-        stockByColor: JSON.parse(JSON.stringify(product.value.stockByColor || {}))
+        stockByColor: JSON.parse(JSON.stringify(this.product.stockByColor || {}))
       }
       
       cartStore.addToCart(cartItem)
       
       // Don't update product stock here - it should only be updated during checkout
-    }
-    
-    onMounted(() => {
-      // Validate product exists
-      if (!product.value) {
-        error.value = "Product not found"
-      }
-      loading.value = false
-    })
-    
-    return {
-      product,
-      productImages,
-      loading,
-      error,
-      config,
-      handleAddToCart
     }
   }
 }
