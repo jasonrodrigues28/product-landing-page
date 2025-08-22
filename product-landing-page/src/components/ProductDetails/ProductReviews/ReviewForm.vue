@@ -68,7 +68,6 @@
 </template>
 
 <script>
-import { ref } from 'vue'
 import { useUserStore } from 'src/stores/user'
 
 export default {
@@ -102,30 +101,25 @@ export default {
   
   emits: ['submit', 'cancel'],
   
-  setup(props, { emit }) {
-    const userStore = useUserStore()
-    
-    // Review data with initial values
-    const review = ref({
-      rating: props.initialRating,
-      title: props.initialTitle,
-      comment: props.initialComment
-    })
-    
-    // Submit review function
-    const submitReview = () => {
-      if (!review.value.rating) {
+  data() {
+    return {
+      userStore: useUserStore(),
+      review: {
+        rating: this.initialRating,
+        title: this.initialTitle,
+        comment: this.initialComment
+      }
+    }
+  },
+  
+  methods: {
+    submitReview() {
+      if (!this.review.rating) {
         // Rating is required
         return
       }
       
-      emit('submit', { ...review.value })
-    }
-    
-    return {
-      review,
-      submitReview,
-      userStore
+      this.$emit('submit', { ...this.review })
     }
   }
 }

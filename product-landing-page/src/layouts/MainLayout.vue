@@ -50,15 +50,9 @@
 <script>
 import { useCartStore } from 'stores/cart'
 import { useUserStore } from 'stores/user'
-import { useRouter } from 'vue-router'
 
 export default {
   name: 'MainLayout',
-
-  setup() {
-    const router = useRouter();
-    return { router };
-  },
 
   data() {
     return {

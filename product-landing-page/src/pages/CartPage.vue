@@ -19,7 +19,7 @@
                 </q-card-section>
 
                 <q-card-actions align="right">
-                    <q-btn flat color="negative" icon="delete" @click="removeFromCart(item.id)" />
+                    <q-btn flat color="negative" icon="delete" @click="removeFromCart({ id: item.id, selectedColor: item.selectedColor })" />
                 </q-card-actions>
             </q-card>
 

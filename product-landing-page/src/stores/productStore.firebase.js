@@ -69,30 +69,7 @@ export const useProductStore = defineStore('product', {
           ...product,
           productId,
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          unitsSold: 0
-        }
-        
-        // If product has color variants, set up stock structure
-        if (productToSave.colorVariants && productToSave.colorVariants.length > 0) {
-          const stock = productToSave.stock || 0
-          productToSave.stockByColor = {}
-
-          // Distribute stock evenly among variants or use provided specific values
-          if (productToSave.stockByColor) {
-            // Keep existing stock structure
-          } else {
-            // Set up even distribution
-            const variantCount = productToSave.colorVariants.length
-            const baseStock = Math.floor(stock / variantCount)
-            const remainder = stock % variantCount
-
-            // Distribute stock evenly among variants
-            productToSave.colorVariants.forEach((color, index) => {
-              // Add an extra to early variants if there's remainder stock
-              productToSave.stockByColor[color] = baseStock + (index < remainder ? 1 : 0)
-            })
-          }
+          updatedAt: new Date().toISOString()
         }
         
         // Add to Firebase
@@ -116,26 +93,10 @@ export const useProductStore = defineStore('product', {
         const firebaseKey = product.firebaseKey
         const productRef = ref(db, `products/${firebaseKey}`)
         
-        // If color variants were updated, handle stock restructuring
-        if (updatedFields.colorVariants) {
-          const currentStock = product.stockByColor || {}
-          const updatedStockByColor = {}
-
-          // Keep existing stock values for colors that still exist
-          updatedFields.colorVariants.forEach((color) => {
-            updatedStockByColor[color] = currentStock[color] || 0
-          })
-
-          // Update the stock by color
-          updatedFields.stockByColor = updatedStockByColor
-        }
-        
         await update(productRef, {
           ...updatedFields,
           updatedAt: new Date().toISOString()
         })
-        
-        return true
       } catch (error) {
         console.error('Error updating product:', error)
         throw error
@@ -146,13 +107,12 @@ export const useProductStore = defineStore('product', {
     async deleteProduct(productId) {
       try {
         const product = this.productList.find((p) => p.productId === productId)
-        if (!product) return false
+        if (!product) return
         
         const firebaseKey = product.firebaseKey
         const productRef = ref(db, `products/${firebaseKey}`)
         
         await remove(productRef)
-        return true
       } catch (error) {
         console.error('Error deleting product:', error)
         throw error
@@ -163,18 +123,11 @@ export const useProductStore = defineStore('product', {
     async deleteMultipleProducts(productIds) {
       try {
         const promises = productIds.map(id => this.deleteProduct(id))
-        const results = await Promise.all(promises)
-        return results.some(result => result === true)
+        await Promise.all(promises)
       } catch (error) {
         console.error('Error deleting multiple products:', error)
         throw error
       }
-    },
-
-    // Reset products (useful for testing)
-    resetProducts() {
-      const productsRef = ref(db, 'products')
-      set(productsRef, null)
     },
 
     // Generate a product ID
@@ -201,10 +154,7 @@ export const useProductStore = defineStore('product', {
         } else {
           // Update general stock
           const productRef = ref(db, `products/${firebaseKey}`)
-          await update(productRef, { 
-            stock: newStock,
-            updatedAt: new Date().toISOString() 
-          })
+          await update(productRef, { stock: newStock })
         }
       } catch (error) {
         console.error('Error updating product stock:', error)
@@ -320,12 +270,6 @@ export const useProductStore = defineStore('product', {
         console.error('Error processing checkout:', error)
         throw error
       }
-    },
-
-    // Save to localStorage - kept for backward compatibility but not used with Firebase
-    saveToLocalStorage() {
-      // Do nothing as we're using Firebase
-      return
     }
   },
 

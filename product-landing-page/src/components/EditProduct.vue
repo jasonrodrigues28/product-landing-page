@@ -137,7 +137,6 @@
 </template>
 
 <script>
-import { ref } from 'vue';
 import { useProductStore } from '../stores/productStore';
 
 export default {
@@ -150,16 +149,11 @@ export default {
     }
   },
 
-  setup() {
+  data() {
     return {
       categories: ['Shirt', 'Tshirt', 'Pants'],
       colors: ['Red', 'Green', 'Blue'],
-      saving: ref(false)
-    };
-  },
-
-  data() {
-    return {
+      saving: false,
       editedProduct: {
         productId: '',
         name: '',
