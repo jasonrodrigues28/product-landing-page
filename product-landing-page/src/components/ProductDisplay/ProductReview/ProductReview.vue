@@ -125,19 +125,7 @@
         </q-card-section>
         
         <q-card-section>
-          <div class="row items-center justify-between">
-            <div class="helpful-section">
-              Was this review helpful?
-              <q-btn flat round size="sm" color="grey" icon="thumb_up" @click="markHelpful(review.id, true)" />
-              {{ review.helpful || 0 }}
-              <q-btn flat round size="sm" color="grey" icon="thumb_down" @click="markHelpful(review.id, false)" class="q-ml-sm" />
-              {{ review.notHelpful || 0 }}
-            </div>
-            
-            <div v-if="canManageReview(review)">
-              <q-btn flat round size="sm" color="grey" icon="delete" @click="deleteReview(review.id)" />
-            </div>
-          </div>
+          <!-- Removed like/dislike and delete button as requested -->
         </q-card-section>
       </q-card>
     </div>
