@@ -88,6 +88,8 @@ export const useProductStore = defineStore('product', {
           updatedAt: p.updatedAt,
           unitsSold: p.unitsSold,
           unitsSoldByColor: p.unitsSoldByColor,
+          // Include a single lightweight preview image (if available) so lists can show thumbnails
+          previewImage: (p.imagePaths && Object.values(p.imagePaths)[0]) || p.previewImage || '',
         }
       }
 

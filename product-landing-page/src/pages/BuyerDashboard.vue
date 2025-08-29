@@ -23,9 +23,10 @@
                 <q-card class="product-card product-card-dark">
                     <router-link :to="`/product/${product.productId}`" class="product-link">
                         <div class="product-image product-img-dark">
-                            <template v-if="product.imagePaths && Object.keys(product.imagePaths).length > 0">
-                                <img :src="product.imagePaths[selectedColors[product.productId] || product.colorVariants[0]]"
-                                    :alt="product.name">
+                            <template
+                                v-if="(product.imagePaths && Object.keys(product.imagePaths).length > 0) || product.previewImage">
+                                <img :src="(product.imagePaths && product.imagePaths[selectedColors[product.productId] || (product.colorVariants && product.colorVariants[0])]) || getProductImage(product) || product.previewImage"
+                                    :alt="product.name || 'product'">
                             </template>
                             <div v-else class="no-image">
                                 <q-icon name="image" size="50px" color="grey-5" />
@@ -48,7 +49,7 @@
                             <q-btn-toggle v-model="selectedColors[product.productId]" :options="product.colorVariants.map(color => ({
                                 label: color,
                                 value: color,
-                                disable: !product.imagePaths[color]
+                                disable: !(product.imagePaths && product.imagePaths[color])
                             }))" flat dense spread no-caps class="full-width"
                                 @update:model-value="updateProductColor(product.productId)" />
                         </div>
@@ -73,7 +74,7 @@
                             </q-chip>
                         </div>
 
-                        
+
                     </q-card-section>
 
                     <q-card-section v-if="product.colorVariants && product.colorVariants.length">
@@ -111,7 +112,7 @@ import { useProductStore } from "../stores/productStore";
 
 export default {
     name: "BuyerDashboard",
-    
+
 
     data() {
         return {
@@ -191,7 +192,7 @@ export default {
                     originalPrice: product.originalPrice,
                     description: product.description,
                     selectedColor: selectedColor,
-                    image: product.imagePaths[selectedColor],
+                    image: (product.imagePaths && product.imagePaths[selectedColor]) || product.previewImage || null,
                     quantity: quantity,
                     stockByColor: product.stockByColor // Include stock information
                 };
