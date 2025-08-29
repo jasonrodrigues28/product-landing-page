@@ -60,6 +60,19 @@ const routes = [
         beforeEnter: requireBuyer,
       },
       {
+        path: '/buyer/home',
+        name: 'buyerHome',
+        component: () => import('../pages/BuyerHome.vue'),
+        beforeEnter: requireBuyer,
+      },
+      {
+        path: '/buyer/category/:category',
+        name: 'buyerCategory',
+        component: () => import('../pages/CategoryPage.vue'),
+        props: true,
+        beforeEnter: requireBuyer,
+      },
+      {
         path: '/cart',
         name: 'cart',
         component: () => import('../pages/CartPage.vue'),

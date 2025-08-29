@@ -112,7 +112,7 @@ export default {
           if (userStore.checkIsSeller()) {
             this.$router.push('/seller')
           } else if (userStore.checkIsBuyer()) {
-            this.$router.push('/buyer')
+            this.$router.push('/buyer/home')
           }
         } else {
           this.$q.notify({ color: 'negative', message: 'Invalid credentials' })

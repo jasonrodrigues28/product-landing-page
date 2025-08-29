@@ -1,17 +1,21 @@
 <template>
     <q-page class="q-pa-md buyer-dashboard-page">
-        <div class="text-h5 q-mb-md">Available Products</div>
+        <div class="row items-center q-mb-md">
+            <q-btn flat round dense icon="home" class="q-mr-sm" @click="goHome" />
+            <div class="text-h5 q-mr-md">Available Products</div>
+            <div v-if="routeCategory" class="text-subtitle2 text-grey-5">Category: {{ routeCategory }}</div>
+        </div>
 
         <!-- Search and Filter Section -->
         <div class="row q-mb-md search-filter">
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-6">
                 <q-input v-model="searchText" label="Search products" dense outlined clearable class="white-input">
                     <template v-slot:append>
                         <q-icon name="search" />
                     </template>
                 </q-input>
             </div>
-            <div class="col-12 col-md-4 q-pl-md">
+            <div class="col-12 col-md-4 q-pl-md" v-if="showCategorySelect">
                 <q-select v-model="selectedCategory" :options="categories" label="Filter by category" dense outlined
                     clearable options-dense class="white-input" />
             </div>
@@ -131,6 +135,13 @@ export default {
             const categoriesSet = new Set(this.productStore.productList.map(p => p.category));
             return Array.from(categoriesSet);
         },
+        routeCategory() {
+            return this.$route.query.category || null
+        },
+        showCategorySelect() {
+            // Only show the category dropdown when user is viewing the full store (no category filter)
+            return !this.routeCategory
+        },
         filteredProducts() {
             let products = this.productStore.productList;
 
@@ -144,8 +155,14 @@ export default {
             }
 
             // Apply category filter
-            if (this.selectedCategory) {
-                products = products.filter(p => p.category === this.selectedCategory);
+            // Use route query category/subcategory when provided (e.g., from BuyerHome/CategoryPage)
+            const routeCategory = this.$route.query.category || this.selectedCategory
+            const routeSub = this.$route.query.subcategory || this.$route.query.subcategory
+            if (routeCategory) {
+                products = products.filter(p => p.category === routeCategory);
+            }
+            if (routeSub) {
+                products = products.filter(p => (p.subCategory || 'All') === routeSub);
             }
 
             return products;
@@ -153,6 +170,9 @@ export default {
     },
 
     methods: {
+        goHome() {
+            this.$router.push({ name: 'buyerHome' })
+        },
         getProductImage(product) {
             if (!product.imagePaths || Object.keys(product.imagePaths).length === 0) {
                 return null;
