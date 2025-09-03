@@ -69,12 +69,65 @@ export const useProductStore = defineStore('product', {
       return this.getNextProductId()
     },
     saveToLocalStorage() {
-      // Convert state to JSON-friendly format
-      const stateToSave = {
-        ...this.$state,
-        availableIds: Array.from(this.availableIds), // Convert Set to Array for JSON storage
+      // Convert state to JSON-friendly format but sanitize large or unnecessary fields
+      const sanitizeProduct = (p) => {
+        // Keep only essential fields for persistence to avoid exceeding quota (avoid images/blobs/base64)
+        return {
+          productId: p.productId,
+          title: p.title,
+          description: p.description,
+          price: p.price,
+          originalPrice: p.originalPrice,
+          hasDiscount: p.hasDiscount,
+          discountPercent: p.discountPercent,
+          category: p.category,
+          stock: p.stock,
+          stockByColor: p.stockByColor,
+          colorVariants: p.colorVariants,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+          unitsSold: p.unitsSold,
+          unitsSoldByColor: p.unitsSoldByColor,
+          // Include a single lightweight preview image (if available) so lists can show thumbnails
+          previewImage: (p.imagePaths && Object.values(p.imagePaths)[0]) || p.previewImage || '',
+        }
       }
-      localStorage.setItem('productStore', JSON.stringify(stateToSave))
+
+      const stateToSave = {
+        sellerInitials: this.sellerInitials,
+        productList: this.productList.map(sanitizeProduct),
+        currentProductId: this.currentProductId,
+        highestUsedId: this.highestUsedId,
+        availableIds: Array.from(this.availableIds), // Convert Set to Array for JSON storage
+        // intentionally do not persist cartItems here (use cart store)
+      }
+
+      try {
+        localStorage.setItem('productStore', JSON.stringify(stateToSave))
+      } catch (err) {
+        // If quota exceeded, attempt a minimal fallback save (only ids + small product summary)
+        console.warn(
+          'localStorage quota exceeded while saving productStore; saving minimal fallback.',
+          err,
+        )
+        try {
+          const minimal = {
+            sellerInitials: this.sellerInitials,
+            productList: this.productList.map((p) => ({
+              productId: p.productId,
+              title: p.title,
+              price: p.price,
+            })),
+            currentProductId: this.currentProductId,
+            highestUsedId: this.highestUsedId,
+            availableIds: Array.from(this.availableIds),
+          }
+          localStorage.setItem('productStore', JSON.stringify(minimal))
+        } catch (err2) {
+          // If even minimal save fails, give up silently to avoid breaking the app; rely on in-memory state
+          console.error('Failed to save minimal productStore fallback:', err2)
+        }
+      }
     },
     addProduct(product) {
       // Find unused ID from pool or use next sequential
